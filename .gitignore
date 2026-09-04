@@ -8,9 +8,8 @@ dist/
 build/
 .vite/
 *.tsbuildinfo
-# convex local backend + generated deployment config (keep convex/_generated tracked)
+# convex local backend state (convex/_generated incl. managed AI files stays tracked)
 .convex/
-convex/_generated/ai/
 # browser / recording artifacts
 .playwright-mcp/
 playwright-report/
