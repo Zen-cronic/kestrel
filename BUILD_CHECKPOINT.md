@@ -1,8 +1,8 @@
 # BUILD_CHECKPOINT — Change Order Desk
 
-**Status headline (2026-09-04 17:46 EDT):** scaffold packet verified on the anonymous local Convex deployment — hero path runs end to end in mock mode (request → priced draft → sent → two written approvals → approved; idempotent; ledger); typecheck, unit tests and Vite build green; first code commit pending in this session.
+**Status headline (2026-09-04 17:47 EDT):** packet 1 (scaffold + hero path) accepted at `b6237f7`; hero path runs end to end in mock mode on the local deployment; typecheck, tests and build green. No deployment to convex.site yet (operator's Convex account needed). Next: packet 2 (AgentMail live) is credential-gated; packet 5 (design-direction + two-window UI) can proceed in mock mode.
 
-**Current accepted state:** see the Ledger — packet 1 accepted once committed (commit hash recorded there).
+**Current accepted state:** commit `b6237f7` on `main` (private remote `origin`), verified on the anonymous local deployment in mock mode.
 
 Concept lock: PROVISIONAL (operator pre-authorization 2026-09-04; revisable). Strategy, decision brief, flip conditions and research live in the suite repo at `hackathon-agent/hackathons/convex-allgas-2026/state.md`.
 
@@ -32,7 +32,7 @@ Never paste keys into chat, commits or `hackathon.md`; `.env.local` is gitignore
 | # | Packet | Hypothesis | Verification | Result |
 |---|---|---|---|---|
 | 0 | hygiene | `.gitignore` before code | `git status` shows no secrets | accepted `38bb44b` |
-| 1 | scaffold | schema + approvals state machine + providers + docs compile and push locally | `npx convex dev --once` (6 components installed) · `npx tsc -b --noEmit` · `npx vitest run` (4 tests) · `npx vite build` · `npx convex run` smoke sequence (seed → sendAsHomeowner → sendForApproval → replyAs approve → status approved, 2 approvals, duplicate ignored) | accepted (pending commit) |
+| 1 | scaffold | schema + approvals state machine + providers + docs compile and push locally | `npx convex dev --once` (6 components installed) · `npx tsc -b --noEmit` · `npx vitest run` (4 tests) · `npx vite build` · `npx convex run` smoke sequence (seed → sendAsHomeowner → sendForApproval → replyAs approve → status approved, 2 approvals, duplicate ignored) | accepted `b6237f7` |
 
 ## Next task
 
