@@ -1,0 +1,29 @@
+# secrets
+.env
+.env.*
+!.env.example
+# dependencies / build
+node_modules/
+dist/
+build/
+.vite/
+*.tsbuildinfo
+# convex local backend + generated deployment config (keep convex/_generated tracked)
+.convex/
+convex/_generated/ai/
+# browser / recording artifacts
+.playwright-mcp/
+playwright-report/
+test-results/
+recordings/
+# harness-local settings and caches
+.claude/settings.local.json
+.codex/config.toml
+.codex/auth.json
+.agents/.cache/
+.DS_Store
+*.log
+npm-debug.log*
+# data / scratch
+data/
+tmp/
