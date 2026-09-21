@@ -89,6 +89,17 @@ export default function Dashboard() {
     selectedProspectId ? { prospectId: selectedProspectId } : "skip"
   );
 
+  const websiteVersions = useQuery(
+    api.previews.listVersions,
+    selectedProspectId ? { prospectId: selectedProspectId } : "skip"
+  );
+  const activePreviewSlug =
+    websiteVersions && websiteVersions.length > 0
+      ? websiteVersions[0].slug
+      : draft?.shareUrl
+      ? draft.shareUrl.replace(/^\/preview\//, "")
+      : "rustic-kettle-preview-v1";
+
   const activityLedger = useQuery(
     api.activity.listByWorkspace,
     workspaceId ? { workspaceId } : "skip"
@@ -207,7 +218,7 @@ export default function Dashboard() {
         <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
           {selectedProspect && (
             <Link
-              to={`/preview/${selectedProspect.name.toLowerCase().replace(/[^a-z0-9]/g, "-")}-preview-v1`}
+              to={`/preview/${activePreviewSlug}`}
               target="_blank"
               className="btn btn-sm"
               style={{ background: "#f1f5f9" }}
