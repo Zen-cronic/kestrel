@@ -7,8 +7,8 @@ import type { Id } from "../../convex/_generated/dataModel";
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState<
-    "discovery" | "evidence" | "outreach" | "thread" | "proposals" | "ledger"
-  >("discovery");
+    "discovery" | "evidence" | "outreach" | "thread" | "proposals" | "ledger" | "preview"
+  >("evidence");
 
   const [selectedProspectId, setSelectedProspectId] = useState<Id<"prospects"> | null>(null);
   const [searchCategory, setSearchCategory] = useState("independent café");
@@ -16,6 +16,7 @@ export default function Dashboard() {
   const [isSearching, setIsSearching] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
   const [actionNotice, setActionNotice] = useState<string | null>(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   // Edit draft state
   const [isEditingDraft, setIsEditingDraft] = useState(false);
@@ -88,6 +89,17 @@ export default function Dashboard() {
     api.followups.getSchedules,
     selectedProspectId ? { prospectId: selectedProspectId } : "skip"
   );
+
+  const websiteVersions = useQuery(
+    api.previews.listVersions,
+    selectedProspectId ? { prospectId: selectedProspectId } : "skip"
+  );
+  const activePreviewSlug =
+    websiteVersions && websiteVersions.length > 0
+      ? websiteVersions[0].slug
+      : draft?.shareUrl
+      ? draft.shareUrl.replace(/^\/preview\//, "")
+      : "rustic-kettle-preview-v1";
 
   const activityLedger = useQuery(
     api.activity.listByWorkspace,
@@ -194,25 +206,49 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="desk-shell">
-      {/* Top Header */}
-      <header className="desk-header">
-        <div className="desk-brand">
-          <div className="desk-logo-icon">S</div>
+    <div className="studio-shell">
+      {/* Top Command Bar */}
+      <header className="studio-topbar">
+        <div className="studio-brand-group">
+          <div className="studio-logo-icon">S</div>
           <div>
-            <div className="desk-brand-title">Storefront Desk</div>
-            <span className="desk-tag">Provisional Naming • North American SMB Acquisition Engine</span>
+            <div className="studio-title">Storefront Desk</div>
+            <div className="studio-subtitle">Autonomous SMB Acquisition Console</div>
           </div>
         </div>
-        <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+
+        {/* Live Status Strip */}
+        <div className="studio-status-strip">
+          <span className="fixture-dot" />
+          <span style={{ fontWeight: 600, color: "var(--ink-primary)" }}>Deterministic Fixture Mode</span>
+          <span style={{ color: "var(--line-strong)" }}>•</span>
+          <span style={{ color: "var(--ink-muted)" }}>
+            4 Sponsors: Convex Relational DB • OpenAI Responses • Firecrawl Audit • AgentMail
+          </span>
+        </div>
+
+        {/* Top Actions */}
+        <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+          <button
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            className="btn btn-sm"
+            style={{
+              background: isSidebarOpen ? "rgba(99, 102, 241, 0.18)" : "rgba(255, 255, 255, 0.05)",
+              borderColor: isSidebarOpen ? "var(--accent-primary)" : "var(--line-default)",
+              color: isSidebarOpen ? "#c7d2fe" : "var(--ink-secondary)",
+            }}
+            title="Toggle Pipeline Sidebar"
+          >
+            {isSidebarOpen ? "◧ Pipeline" : "◨ Pipeline"} ({candidates?.length ?? 0})
+          </button>
           {selectedProspect && (
             <Link
-              to={`/preview/${selectedProspect.name.toLowerCase().replace(/[^a-z0-9]/g, "-")}-preview-v1`}
+              to={`/preview/${activePreviewSlug}`}
               target="_blank"
               className="btn btn-sm"
-              style={{ background: "#f1f5f9" }}
+              style={{ background: "rgba(255, 255, 255, 0.05)", borderColor: "var(--line-default)" }}
             >
-              🌐 Open Live Website Preview ↗
+              🌐 Open Storefront Tab ↗
             </Link>
           )}
           <button
@@ -220,714 +256,855 @@ export default function Dashboard() {
             disabled={isResetting}
             className="btn btn-sm btn-primary"
           >
-            {isResetting ? "Resetting..." : "⚡ Reset Demo & Seed Hero Flow"}
+            {isResetting ? "Resetting..." : "⚡ Reset Hero Flow"}
           </button>
         </div>
       </header>
 
-      {/* Persistent Fixture Mode Banner */}
-      <div className="fixture-banner">
-        <div className="fixture-indicator">
-          <span className="fixture-dot" />
-          <span>
-            <strong>Deterministic Fixture Mode Active</strong> — Zero live network calls or unapproved external sends.
-          </span>
-        </div>
-        <span style={{ fontSize: "12px", opacity: 0.85 }}>
-          All 4 Sponsors Verified: Convex Relational DB • OpenAI Structured Outputs • Firecrawl Audit • AgentMail Threading
-        </span>
-      </div>
-
-      {actionNotice && (
-        <div
-          style={{
-            background: "#eff6ff",
-            border: "1px solid #bfdbfe",
-            color: "#1e40af",
-            padding: "10px 16px",
-            borderRadius: "8px",
-            marginBottom: "16px",
-            fontSize: "13px",
-            fontWeight: 500,
-          }}
-        >
-          ℹ️ {actionNotice}
-        </div>
-      )}
-
-      {/* Campaign Bar */}
-      {activeCampaign && (
-        <div className="campaign-bar">
-          <div className="campaign-info">
-            <span className="campaign-name">{activeCampaign.name}</span>
-            <span className="campaign-meta">
-              Target: <strong>{activeCampaign.category}</strong> in <strong>{activeCampaign.location}</strong> • Follow-up ceiling: <strong>2 maximum</strong>
-            </span>
+      {/* Workspace Split Layout */}
+      <div className={`studio-workspace ${isSidebarOpen ? "sidebar-open" : "sidebar-collapsed"}`}>
+        {/* Left Column: Persistent Target Pipeline & Discovery */}
+        <aside className="pipeline-sidebar">
+          <div className="sidebar-heading">
+            <span>Target Pipeline</span>
+            <span className="tab-badge">{candidates?.length ?? 0}</span>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            <span style={{ fontSize: "13px", color: "var(--ink-muted)", fontWeight: 600 }}>Campaign Mode:</span>
-            <div className="mode-selector">
-              <button
-                className={`mode-btn ${activeCampaign.mode === "manual" ? "active" : ""}`}
-                onClick={() => updateCampaignMode({ campaignId: activeCampaign._id, mode: "manual" })}
-              >
-                Manual (Every Send Approved)
-              </button>
-              <button
-                className={`mode-btn ${activeCampaign.mode === "assisted_followups" ? "active" : ""}`}
-                onClick={() => updateCampaignMode({ campaignId: activeCampaign._id, mode: "assisted_followups" })}
-              >
-                Assisted Follow-ups (Max 2)
-              </button>
+
+          <form onSubmit={handleSearch} className="sidebar-search-box">
+            <div style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", color: "var(--ink-muted)" }}>
+              Places Discovery
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* Tabs Nav */}
-      <nav className="tabs-nav">
-        <button
-          className={`tab-btn ${activeTab === "discovery" ? "active" : ""}`}
-          onClick={() => setActiveTab("discovery")}
-        >
-          🔍 1. Discovery & Candidates
-          <span className="tab-badge">{candidates?.length ?? 0}</span>
-        </button>
-        <button
-          className={`tab-btn ${activeTab === "evidence" ? "active" : ""}`}
-          onClick={() => setActiveTab("evidence")}
-        >
-          📑 2. Audited Evidence & Brief
-          <span className="tab-badge">{evidence?.claims?.length ?? 0} claims</span>
-        </button>
-        <button
-          className={`tab-btn ${activeTab === "outreach" ? "active" : ""}`}
-          onClick={() => setActiveTab("outreach")}
-        >
-          ✉️ 3. Outreach & Approval Queue
-          {draft && (
-            <span
-              className={`badge badge-${
-                draft.approvalStatus === "approved"
-                  ? "green"
-                  : draft.approvalStatus === "pending_approval"
-                  ? "amber"
-                  : "red"
-              }`}
+            <input
+              type="text"
+              className="studio-input"
+              value={searchCategory}
+              onChange={(e) => setSearchCategory(e.target.value)}
+              placeholder="Category (e.g. independent café)"
+            />
+            <input
+              type="text"
+              className="studio-input"
+              value={searchLocation}
+              onChange={(e) => setSearchLocation(e.target.value)}
+              placeholder="Location (e.g. Toronto, ON)"
+            />
+            <button
+              type="submit"
+              disabled={isSearching}
+              className="btn btn-sm btn-primary"
+              style={{ width: "100%", marginTop: "2px" }}
             >
-              {draft.approvalStatus}
-            </span>
-          )}
-        </button>
-        <button
-          className={`tab-btn ${activeTab === "thread" ? "active" : ""}`}
-          onClick={() => setActiveTab("thread")}
-        >
-          💬 4. AgentMail Thread
-          <span className="tab-badge">{thread?.messages?.length ?? 0}</span>
-        </button>
-        <button
-          className={`tab-btn ${activeTab === "proposals" ? "active" : ""}`}
-          onClick={() => setActiveTab("proposals")}
-        >
-          🤝 5. Commercial Terms & Revisions
-          <span className="tab-badge">v{proposalHistory?.[0]?.version ?? 1}</span>
-        </button>
-        <button
-          className={`tab-btn ${activeTab === "ledger" ? "active" : ""}`}
-          onClick={() => setActiveTab("ledger")}
-        >
-          📜 6. Activity Ledger & Schedule
-          <span className="tab-badge">{activityLedger?.length ?? 0}</span>
-        </button>
-      </nav>
+              {isSearching ? "Querying Places..." : "🔍 Query Google Places"}
+            </button>
+          </form>
 
-      {/* TAB 1: Discovery */}
-      {activeTab === "discovery" && (
-        <div>
-          <div className="card">
-            <h3 className="card-title">Google Places Official Discovery</h3>
-            <form onSubmit={handleSearch} style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
-              <input
-                type="text"
-                value={searchCategory}
-                onChange={(e) => setSearchCategory(e.target.value)}
-                placeholder="Category (e.g. independent café)"
-                style={{
-                  padding: "8px 12px",
-                  borderRadius: "8px",
-                  border: "1px solid var(--line)",
-                  flex: "1 1 220px",
-                }}
-              />
-              <input
-                type="text"
-                value={searchLocation}
-                onChange={(e) => setSearchLocation(e.target.value)}
-                placeholder="Location (e.g. Toronto, ON)"
-                style={{
-                  padding: "8px 12px",
-                  borderRadius: "8px",
-                  border: "1px solid var(--line)",
-                  flex: "1 1 220px",
-                }}
-              />
-              <button type="submit" disabled={isSearching} className="btn btn-primary">
-                {isSearching ? "Searching Places..." : "Search Places Candidates"}
-              </button>
-            </form>
-          </div>
-
-          <div className="candidate-grid">
-            {candidates?.map((c: any) => (
-              <div key={c._id} className="candidate-card">
-                <div>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                    <h4 className="candidate-title">{c.name}</h4>
-                    <span className="badge badge-amber">{c.status}</span>
+          {/* Scrollable Candidate Cards */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "10px", overflowY: "auto", flex: 1, paddingRight: "2px" }}>
+            {candidates?.map((c: any) => {
+              const isSelected = selectedProspectId === c.prospectId;
+              return (
+                <div
+                  key={c._id}
+                  className={`candidate-item-card ${isSelected ? "active" : ""}`}
+                  onClick={() => {
+                    if (c.prospectId) setSelectedProspectId(c.prospectId);
+                  }}
+                >
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "8px" }}>
+                    <strong style={{ fontSize: "14px", color: "var(--ink-primary)", lineHeight: 1.3 }}>{c.name}</strong>
+                    <span className={`badge ${c.status === "approved" ? "badge-green" : "badge-amber"}`}>
+                      {c.status}
+                    </span>
                   </div>
-                  <div className="candidate-address">📍 {c.formattedAddress}</div>
-                  <div style={{ fontSize: "13px", marginBottom: "8px" }}>
+                  <div style={{ fontSize: "12px", color: "var(--ink-muted)" }}>📍 {c.formattedAddress}</div>
+                  <div style={{ fontSize: "12px", color: "var(--ink-secondary)" }}>
                     ⭐ {c.rating} ({c.userRatingsTotal} reviews) • {c.priceLevel ? "$".repeat(c.priceLevel) : "$$"}
                   </div>
 
-                  <div className="signals-list">
-                    <strong style={{ fontSize: "11px", textTransform: "uppercase", color: "var(--amber)" }}>
-                      Weak Presence Signals:
-                    </strong>
-                    {c.weakPresenceSignals.map((s: string, idx: number) => (
-                      <div key={idx} className="signal-item">
-                        ⚠️ {s}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div style={{ marginTop: "16px", display: "flex", gap: "8px" }}>
-                  {c.status === "approved" ? (
-                    <button
-                      className="btn btn-sm"
-                      style={{ background: "#dcfce7", color: "#166534", width: "100%" }}
-                      onClick={() => {
-                        if (c.prospectId) setSelectedProspectId(c.prospectId);
-                        setActiveTab("evidence");
-                      }}
-                    >
-                      ✓ Approved Prospect (View Brief)
-                    </button>
-                  ) : (
-                    <>
-                      <button
-                        className="btn btn-sm btn-primary"
-                        style={{ flex: 1 }}
-                        onClick={() => handleApproveCandidate(c._id)}
-                      >
-                        Approve for Outreach
-                      </button>
-                      <button
-                        className="btn btn-sm"
-                        onClick={() => dismissCandidate({ candidateId: c._id })}
-                      >
-                        Dismiss
-                      </button>
-                    </>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* TAB 2: Audited Evidence & Brief */}
-      {activeTab === "evidence" && selectedProspect && (
-        <div>
-          <div className="card">
-            <h3 className="card-title">
-              <span>Audited Business Brief: {selectedProspect.name}</span>
-              <span className="badge badge-green">Grounded with Structured Citations</span>
-            </h3>
-            <p style={{ color: "var(--ink-muted)", fontSize: "14px", marginTop: "-8px", marginBottom: "20px" }}>
-              Every claim below is verified against official Google Places listing data and Firecrawl open-web scrapes.
-              No unconfirmed menu items, prices, or awards are hallucinated.
-            </p>
-
-            {evidence && (
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px" }}>
-                <div>
-                  <h4 style={{ margin: "0 0 12px" }}>Open-Web Scraped Sources ({evidence.sources.length})</h4>
-                  <div className="evidence-list">
-                    {evidence.sources.map((s: any) => (
-                      <div key={s._id} className="evidence-item">
-                        <div className="evidence-header">
-                          <strong>{s.title}</strong>
-                          <span className="badge badge-blue">{s.provider}</span>
-                        </div>
-                        <div style={{ fontSize: "12px", color: "var(--ink-muted)" }}>
-                          URL: <code>{s.url}</code> • Retrieved: {when(s.retrievedAt)}
-                        </div>
-                        {s.rawTextSnippet && (
-                          <div className="evidence-excerpt">{s.rawTextSnippet}</div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <h4 style={{ margin: "0 0 12px" }}>Established Factual Claims ({evidence.claims.length})</h4>
-                  <div className="evidence-list">
-                    {evidence.claims.map((cl: any) => (
-                      <div key={cl._id} className="evidence-item">
-                        <div className="evidence-header">
-                          <span style={{ fontWeight: 700 }}>{cl.claimKey}</span>
-                          <span
-                            className={`badge badge-${
-                              cl.status === "verified" ? "green" : "amber"
-                            }`}
-                          >
-                            {cl.status} ({cl.confidence})
-                          </span>
-                        </div>
-                        <div style={{ fontSize: "13px", margin: "4px 0" }}>{cl.statement}</div>
-                        <div className="evidence-excerpt">"{cl.rawExcerpt}"</div>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="needs-confirmation-box">
-                    <strong>⚠️ Explicitly Unconfirmed Details:</strong>
-                    <div style={{ marginTop: "6px" }}>
-                      • Corporate event catering packages & custom birthday cake orders were not found on the open web.
-                      Marked as <em>"Needs Confirmation"</em> rather than fabricated.
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* TAB 3: Outreach & Approval Queue */}
-      {activeTab === "outreach" && draft && selectedProspect && (
-        <div>
-          <div className="card">
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "16px" }}>
-              <div>
-                <h3 style={{ margin: "0 0 4px" }}>Outreach Draft v{draft.version}</h3>
-                <span style={{ fontSize: "13px", color: "var(--ink-muted)" }}>
-                  Recipient: <strong>{draft.recipientEmail}</strong> • Commercial terms: <strong>{cents(draft.proposedPriceCents, draft.currency)}</strong>, {draft.proposedTimelineDays}-day turnaround
-                </span>
-              </div>
-              <span
-                className={`badge badge-${
-                  draft.approvalStatus === "approved"
-                    ? "green"
-                    : draft.approvalStatus === "pending_approval"
-                    ? "amber"
-                    : "red"
-                }`}
-                style={{ fontSize: "13px", padding: "6px 12px" }}
-              >
-                {draft.approvalStatus.toUpperCase()}
-              </span>
-            </div>
-
-            {draft.approvalStatus === "expired_due_to_edit" && (
-              <div
-                style={{
-                  background: "#fef2f2",
-                  border: "1px solid #fecaca",
-                  color: "#991b1b",
-                  padding: "10px 14px",
-                  borderRadius: "8px",
-                  marginBottom: "16px",
-                  fontSize: "13px",
-                  fontWeight: 600,
-                }}
-              >
-                ⚠️ Approval Expired: This pitch was edited after operator approval. A fresh approval is required before dispatch!
-              </div>
-            )}
-
-            {isEditingDraft ? (
-              <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginBottom: "20px" }}>
-                <div>
-                  <label style={{ fontSize: "12px", fontWeight: 700, display: "block", marginBottom: "4px" }}>
-                    Subject Line
-                  </label>
-                  <input
-                    type="text"
-                    value={editSubject}
-                    onChange={(e) => setEditSubject(e.target.value)}
-                    style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid var(--line)" }}
-                  />
-                </div>
-                <div>
-                  <label style={{ fontSize: "12px", fontWeight: 700, display: "block", marginBottom: "4px" }}>
-                    Proposed Price (Cents)
-                  </label>
-                  <input
-                    type="number"
-                    value={editPriceCents}
-                    onChange={(e) => setEditPriceCents(Number(e.target.value))}
-                    style={{ width: "200px", padding: "8px", borderRadius: "6px", border: "1px solid var(--line)" }}
-                  />
-                </div>
-                <div>
-                  <label style={{ fontSize: "12px", fontWeight: 700, display: "block", marginBottom: "4px" }}>
-                    Email Body
-                  </label>
-                  <textarea
-                    rows={12}
-                    value={editBody}
-                    onChange={(e) => setEditBody(e.target.value)}
-                    style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid var(--line)" }}
-                  />
-                </div>
-                <div style={{ display: "flex", gap: "8px" }}>
-                  <button className="btn btn-primary" onClick={handleSaveDraftEdit}>
-                    Save Changes & Invalidate Prior Approval
-                  </button>
-                  <button className="btn" onClick={() => setIsEditingDraft(false)}>
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div
-                style={{
-                  background: "var(--surface-alt)",
-                  border: "1px solid var(--line)",
-                  borderRadius: "8px",
-                  padding: "16px",
-                  marginBottom: "20px",
-                }}
-              >
-                <div style={{ marginBottom: "8px", fontSize: "14px" }}>
-                  <strong>Subject:</strong> {draft.subject}
-                </div>
-                <pre
-                  style={{
-                    whiteSpace: "pre-wrap",
-                    fontFamily: "var(--font-sans)",
-                    fontSize: "14px",
-                    lineHeight: 1.6,
-                    margin: 0,
-                  }}
-                >
-                  {draft.bodyText}
-                </pre>
-              </div>
-            )}
-
-            <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", alignItems: "center" }}>
-              {draft.approvalStatus !== "approved" ? (
-                <button
-                  className="btn btn-primary"
-                  onClick={async () => {
-                    await approveDraftMutation({ draftId: draft._id });
-                    notify("Outreach draft approved! Ready for dispatch.");
-                  }}
-                >
-                  ✓ Approve Pitch for Sending
-                </button>
-              ) : (
-                <button
-                  className="btn"
-                  style={{ color: "var(--red)" }}
-                  onClick={async () => {
-                    await rejectDraftMutation({ draftId: draft._id });
-                    notify("Draft rejected.");
-                  }}
-                >
-                  ✕ Reject / Revoke Approval
-                </button>
-              )}
-
-              {!isEditingDraft && (
-                <button className="btn" onClick={() => setIsEditingDraft(true)}>
-                  ✏️ Edit Pitch
-                </button>
-              )}
-
-              <button
-                className="btn btn-primary"
-                style={{ background: "#059669", borderColor: "#059669" }}
-                disabled={draft.approvalStatus !== "approved"}
-                onClick={handleSendOutreach}
-              >
-                🚀 Dispatch Email via AgentMail
-              </button>
-
-              <span style={{ fontSize: "12px", color: "var(--ink-muted)" }}>
-                {draft.approvalStatus === "approved"
-                  ? `Approved by ${draft.approvedBy} at ${when(draft.approvedAt ?? Date.now())}`
-                  : "Approval required by authorized operator before dispatch."}
-              </span>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* TAB 4: AgentMail Conversation */}
-      {activeTab === "thread" && selectedProspect && (
-        <div>
-          <div className="card">
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-              <div>
-                <h3 style={{ margin: "0 0 4px" }}>AgentMail Thread: {selectedProspect.name}</h3>
-                <span style={{ fontSize: "13px", color: "var(--ink-muted)" }}>
-                  Recipient: <strong>{selectedProspect.targetEmail}</strong> • Status: <strong>{selectedProspect.outreachStatus}</strong>
-                </span>
-              </div>
-              <button className="btn btn-primary" onClick={handleSimulateReply}>
-                💬 Simulate Inbound Reply & Counteroffer
-              </button>
-            </div>
-
-            <div className="thread-container">
-              {thread?.messages?.length === 0 ? (
-                <div style={{ textAlign: "center", padding: "40px", color: "var(--ink-muted)" }}>
-                  No messages sent yet. Approve and dispatch the initial outreach pitch in Tab 3!
-                </div>
-              ) : (
-                thread?.messages?.map((m: any) => (
-                  <div
-                    key={m._id}
-                    className={`message-bubble ${
-                      m.direction === "outbound" ? "message-outbound" : "message-inbound"
-                    }`}
-                  >
-                    <div className="message-header">
-                      <span>
-                        <strong>{m.direction === "outbound" ? "Storefront Desk Operator" : m.from}</strong>
-                      </span>
-                      <span>{when(m.receivedOrSentAt)}</span>
-                    </div>
-                    <div style={{ fontWeight: 600, fontSize: "13px", marginBottom: "4px" }}>
-                      Subject: {m.subject}
-                    </div>
-                    <div className="message-body">{m.text}</div>
-
-                    {m.classification && (
-                      <div style={{ marginTop: "8px" }}>
-                        <span className="badge badge-amber">
-                          AI Classification: {m.classification}
+                  <div className="presence-chips">
+                    {c.weakPresenceSignals.slice(0, 2).map((s: string, idx: number) => {
+                      const shortText = s
+                        .replace("Heavy reliance on third-party delivery apps with 30% commission cuts", "30% Delivery Cut")
+                        .replace("No official first-party website", "No Website")
+                        .replace("Existing site is not mobile-responsive (fails viewport test)", "Non-Responsive Site")
+                        .replace("SSL certificate expired 140 days ago", "Expired SSL")
+                        .replace("No active website domain on Google listing", "No Domain on Google")
+                        .replace("Menu only available as a low-res photo on social media", "Photo-Only Menu");
+                      return (
+                        <span key={idx} className="presence-chip">
+                          ⚠️ {shortText}
                         </span>
-                        {m.proposedChanges && (
-                          <div
-                            style={{
-                              marginTop: "6px",
-                              fontSize: "12px",
-                              background: "#fffbeb",
-                              padding: "8px",
-                              borderRadius: "6px",
-                              border: "1px solid #fef08a",
-                            }}
-                          >
-                            <strong>Proposed Terms:</strong> {m.proposedChanges.notes}
-                          </div>
-                        )}
+                      );
+                    })}
+                  </div>
+
+                  <div style={{ marginTop: "4px" }}>
+                    {c.status === "approved" ? (
+                      <div style={{ fontSize: "11px", color: "var(--status-green)", fontWeight: 700, display: "flex", alignItems: "center", gap: "4px" }}>
+                        ✓ Active Dossier Loaded
                       </div>
-                    )}
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* TAB 5: Commercial Terms & Revisions */}
-      {activeTab === "proposals" && selectedProspect && (
-        <div>
-          <div className="card">
-            <h3 className="card-title">
-              <span>Commercial Terms & Scope Versions</span>
-              <span className="badge badge-blue">Controlled Human Negotiation</span>
-            </h3>
-            <p style={{ color: "var(--ink-muted)", fontSize: "14px", marginTop: "-8px", marginBottom: "20px" }}>
-              Storefront Desk guarantees that AI models can never autonomously bind commercial terms or accept counteroffers.
-              Any client proposal modification triggers a version diff requiring explicit operator decision.
-            </p>
-
-            <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-              {proposalHistory?.map((p: any) => (
-                <div
-                  key={p._id}
-                  className={`proposal-version-card ${
-                    p.humanDecisionRequired ? "highlight" : ""
-                  }`}
-                >
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "12px" }}>
-                    <div>
-                      <span style={{ fontSize: "17px", fontWeight: 700 }}>
-                        Proposal Version {p.version} — {cents(p.priceCents, p.currency)}
-                      </span>
-                      <span style={{ marginLeft: "12px", fontSize: "13px", color: "var(--ink-muted)" }}>
-                        Timeline: {p.timelineDays} days • Created: {when(p.createdAt)}
-                      </span>
-                    </div>
-                    <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-                      <span
-                        className={`badge badge-${
-                          p.status === "accepted"
-                            ? "green"
-                            : p.status === "counter_proposed_by_client"
-                            ? "amber"
-                            : "blue"
-                        }`}
-                      >
-                        {p.status}
-                      </span>
-                      {p.isCommerciallyBinding && (
-                        <span className="badge badge-green">🔒 Binding Agreement</span>
-                      )}
-                    </div>
-                  </div>
-
-                  {p.changeReason && (
-                    <div style={{ fontSize: "13px", fontStyle: "italic", marginBottom: "12px", color: "var(--amber)" }}>
-                      Reason: {p.changeReason}
-                    </div>
-                  )}
-
-                  <div style={{ marginBottom: "12px" }}>
-                    <strong style={{ fontSize: "13px" }}>Scope of Work:</strong>
-                    <ul style={{ margin: "4px 0 0", paddingLeft: "20px", fontSize: "13px" }}>
-                      {p.scopeItems.map((item: string, idx: number) => (
-                        <li key={idx}>{item}</li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <div style={{ fontSize: "13px", color: "var(--ink-muted)", marginBottom: "16px" }}>
-                    <strong>Terms:</strong> {p.termsSummary}
-                  </div>
-
-                  {p.humanDecisionRequired && (
-                    <div
-                      style={{
-                        background: "#fffbeb",
-                        border: "1px solid #fcd34d",
-                        padding: "12px 16px",
-                        borderRadius: "8px",
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        flexWrap: "wrap",
-                        gap: "12px",
-                      }}
-                    >
-                      <span style={{ fontSize: "13px", fontWeight: 600, color: "#92400e" }}>
-                        ⚠️ Client Counteroffer Awaiting Operator Action: Accept ${ (p.priceCents / 100).toFixed(2) } CAD with 10-day timeline?
-                      </span>
-                      <div style={{ display: "flex", gap: "8px" }}>
+                    ) : (
+                      <div style={{ display: "flex", gap: "6px" }}>
                         <button
                           className="btn btn-sm btn-primary"
-                          onClick={async () => {
-                            await acceptProposalMutation({ proposalId: p._id });
-                            notify(`Proposal v${p.version} accepted! Binding terms established.`);
+                          style={{ flex: 1 }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleApproveCandidate(c._id);
                           }}
                         >
-                          ✓ Accept Counteroffer
+                          Approve
                         </button>
                         <button
                           className="btn btn-sm"
-                          style={{ color: "var(--red)" }}
-                          onClick={async () => {
-                            await declineProposalMutation({ proposalId: p._id });
-                            notify(`Proposal v${p.version} declined.`);
+                          style={{ color: "var(--ink-muted)" }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            dismissCandidate({ candidateId: c._id });
                           }}
                         >
-                          ✕ Decline
+                          Dismiss
                         </button>
                       </div>
-                    </div>
-                  )}
-
-                  {p.decidedBy && (
-                    <div style={{ fontSize: "12px", color: "var(--ink-muted)", marginTop: "8px" }}>
-                      Decided by {p.decidedBy} at {when(p.decidedAt ?? Date.now())}
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
-              ))}
-            </div>
+              );
+            })}
           </div>
-        </div>
-      )}
+        </aside>
 
-      {/* TAB 6: Activity Ledger & Follow-up Schedule */}
-      {activeTab === "ledger" && (
-        <div>
-          <div className="card">
-            <h3 className="card-title">Automated Follow-up Schedule Tracker</h3>
-            <p style={{ color: "var(--ink-muted)", fontSize: "14px", marginTop: "-8px", marginBottom: "16px" }}>
-              In <code>assisted_followups</code> mode, at most two non-binding follow-ups are permitted.
-              Any reply, bounce, unsubscribe, or operator pause immediately cancels all pending follow-ups.
-            </p>
+        {/* Right Column: Main Stage Console */}
+        <main className="stage-main">
+          {actionNotice && (
+            <div
+              style={{
+                background: "rgba(99, 102, 241, 0.12)",
+                border: "1px solid rgba(99, 102, 241, 0.35)",
+                color: "#c7d2fe",
+                padding: "12px 18px",
+                borderRadius: "10px",
+                fontSize: "13px",
+                fontWeight: 500,
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                animation: "noticeSlide var(--duration-fast) var(--ease-spring)",
+              }}
+            >
+              ℹ️ {actionNotice}
+            </div>
+          )}
 
-            {followupSchedules && followupSchedules.length > 0 ? (
-              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                {followupSchedules.map((s: any) => (
+          {/* Active Prospect Hero Card */}
+          {selectedProspect && (
+            <div className="prospect-hero-panel">
+              <div>
+                <h2 className="prospect-name">{selectedProspect.name}</h2>
+                <div className="prospect-submeta">
+                  <span>📍 {selectedProspect.address}</span>
+                  <span>•</span>
+                  <span>✉️ {selectedProspect.targetEmail}</span>
+                  <span>•</span>
+                  <span
+                    className={`badge badge-${
+                      selectedProspect.outreachStatus === "accepted"
+                        ? "green"
+                        : selectedProspect.outreachStatus === "sent"
+                        ? "blue"
+                        : "amber"
+                    }`}
+                  >
+                    {selectedProspect.outreachStatus}
+                  </span>
+                  <span>•</span>
+                  <span style={{ color: "var(--ink-muted)" }}>Campaign: {activeCampaign?.name}</span>
+                </div>
+              </div>
+
+              {activeCampaign && (
+                <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+                  <span style={{ fontSize: "12px", color: "var(--ink-muted)", fontWeight: 600 }}>Policy Mode:</span>
+                  <div className="mode-selector">
+                    <button
+                      className={`mode-btn ${activeCampaign.mode === "manual" ? "active" : ""}`}
+                      onClick={() => updateCampaignMode({ campaignId: activeCampaign._id, mode: "manual" })}
+                    >
+                      Manual Approval
+                    </button>
+                    <button
+                      className={`mode-btn ${activeCampaign.mode === "assisted_followups" ? "active" : ""}`}
+                      onClick={() => updateCampaignMode({ campaignId: activeCampaign._id, mode: "assisted_followups" })}
+                    >
+                      Assisted (Max 2)
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Segmented Console Navigation */}
+          <nav className="desk-tabs">
+            <button
+              className={`desk-tab-btn ${activeTab === "evidence" ? "active" : ""}`}
+              onClick={() => setActiveTab("evidence")}
+            >
+              📑 Grounded Brief
+              <span className="tab-badge">{evidence?.claims?.length ?? 0}</span>
+            </button>
+            <button
+              className={`desk-tab-btn ${activeTab === "outreach" ? "active" : ""}`}
+              onClick={() => setActiveTab("outreach")}
+            >
+              ✉️ Pitch Queue
+              {draft && (
+                <span
+                  className={`badge badge-${
+                    draft.approvalStatus === "approved"
+                      ? "green"
+                      : draft.approvalStatus === "pending_approval"
+                      ? "amber"
+                      : "red"
+                  }`}
+                >
+                  {draft.approvalStatus}
+                </span>
+              )}
+            </button>
+            <button
+              className={`desk-tab-btn ${activeTab === "thread" ? "active" : ""}`}
+              onClick={() => setActiveTab("thread")}
+            >
+              💬 AgentMail Thread
+              <span className="tab-badge">{thread?.messages?.length ?? 0}</span>
+            </button>
+            <button
+              className={`desk-tab-btn ${activeTab === "proposals" ? "active" : ""}`}
+              onClick={() => setActiveTab("proposals")}
+            >
+              🤝 Terms
+              <span className="tab-badge">v{proposalHistory?.[0]?.version ?? 1}</span>
+            </button>
+            <button
+              className={`desk-tab-btn ${activeTab === "preview" ? "active" : ""}`}
+              onClick={() => setActiveTab("preview")}
+            >
+              🖥️ Storefront Studio
+            </button>
+            <button
+              className={`desk-tab-btn ${activeTab === "ledger" ? "active" : ""}`}
+              onClick={() => setActiveTab("ledger")}
+            >
+              📜 Ledger
+              <span className="tab-badge">{activityLedger?.length ?? 0}</span>
+            </button>
+          </nav>
+
+          {/* TAB 1: Audited Evidence & Brief */}
+          {activeTab === "evidence" && selectedProspect && (
+            <div>
+              <div className="card" style={{ padding: "28px 32px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "12px", flexWrap: "wrap", gap: "12px" }}>
+                  <div>
+                    <h3 style={{ margin: "0 0 6px", fontSize: "20px", color: "var(--ink-primary)" }}>
+                      Audited Business Brief: {selectedProspect.name}
+                    </h3>
+                    <p style={{ color: "var(--ink-muted)", fontSize: "14px", margin: 0 }}>
+                      Every factual claim is cross-verified against official Google Places listing data and Firecrawl open-web scrapes.
+                      No unconfirmed menu items, prices, or awards are hallucinated.
+                    </p>
+                  </div>
+                  <span className="badge badge-green" style={{ padding: "6px 12px", fontSize: "12px" }}>
+                    ✓ Grounded With Structured Citations
+                  </span>
+                </div>
+
+                {evidence && (
+                  <div style={{ marginTop: "24px" }}>
+                    {/* Summary Audit Ribbon */}
+                    <div className="audit-stats-grid">
+                      <div className="audit-stat-card">
+                        <div className="audit-stat-icon" style={{ color: "#818cf8" }}>🌐</div>
+                        <div>
+                          <div style={{ fontSize: "11px", textTransform: "uppercase", color: "var(--ink-muted)", fontWeight: 700 }}>Scraped Sources</div>
+                          <div style={{ fontSize: "17px", fontWeight: 800, color: "var(--ink-primary)" }}>{evidence.sources.length} Verified Web Citations</div>
+                        </div>
+                      </div>
+                      <div className="audit-stat-card">
+                        <div className="audit-stat-icon" style={{ color: "#34d399" }}>🛡️</div>
+                        <div>
+                          <div style={{ fontSize: "11px", textTransform: "uppercase", color: "var(--ink-muted)", fontWeight: 700 }}>Factual Claims</div>
+                          <div style={{ fontSize: "17px", fontWeight: 800, color: "var(--ink-primary)" }}>{evidence.claims.length} Grounded (Zero Guessing)</div>
+                        </div>
+                      </div>
+                      <div className="audit-stat-card">
+                        <div className="audit-stat-icon" style={{ color: "#fbbf24" }}>⚠️</div>
+                        <div>
+                          <div style={{ fontSize: "11px", textTransform: "uppercase", color: "var(--ink-muted)", fontWeight: 700 }}>Safety Guardrail</div>
+                          <div style={{ fontSize: "17px", fontWeight: 800, color: "var(--ink-primary)" }}>1 Flagged Needs Confirmation</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Verified Factual Claims Grid */}
+                    <div style={{ marginBottom: "32px" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+                        <h4 style={{ margin: 0, color: "var(--ink-primary)", fontSize: "15px", fontWeight: 700 }}>
+                          Established Factual Claims ({evidence.claims.length})
+                        </h4>
+                        <span style={{ fontSize: "12px", color: "var(--ink-muted)" }}>
+                          Source: Firecrawl Scrape &amp; Search Analysis
+                        </span>
+                      </div>
+
+                      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))", gap: "14px" }}>
+                        {evidence.claims.map((cl: any) => (
+                          <div key={cl._id} className="claim-row-card">
+                            <div className="claim-top-meta">
+                              <span className="claim-title-text">
+                                {cl.claimKey === "specialty_coffee" && "☕ "}
+                                {cl.claimKey === "baked_goods" && "🥐 "}
+                                {cl.claimKey === "dog_friendly_patio" && "🐶 "}
+                                {cl.claimKey === "founding_story" && "🏛️ "}
+                                {cl.claimKey === "atmosphere_details" && "🛋️ "}
+                                {cl.claimKey === "unconfirmed_catering" && "⚠️ "}
+                                {cl.claimKey.replace(/_/g, " ")}
+                              </span>
+                              <span
+                                className={`badge badge-${
+                                  cl.status === "verified" ? "green" : "amber"
+                                }`}
+                              >
+                                {cl.status === "verified" ? "✓ Verified" : "Flagged"} ({cl.confidence})
+                              </span>
+                            </div>
+                            <div style={{ fontSize: "13px", color: "var(--ink-secondary)", lineHeight: 1.5 }}>
+                              {cl.statement}
+                            </div>
+                            <div className="claim-quote-box">
+                              "{cl.rawExcerpt}"
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Sources and Safeguard */}
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))", gap: "20px" }}>
+                      <div>
+                        <h4 style={{ margin: "0 0 14px", color: "var(--ink-primary)", fontSize: "15px", fontWeight: 700 }}>
+                          Open-Web Scraped Sources ({evidence.sources.length})
+                        </h4>
+                        <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                          {evidence.sources.map((s: any) => (
+                            <div key={s._id} className="evidence-item">
+                              <div className="evidence-header">
+                                <strong style={{ color: "var(--ink-primary)", fontSize: "13.5px" }}>{s.title}</strong>
+                                <span className="badge badge-blue">{s.provider}</span>
+                              </div>
+                              <div style={{ fontSize: "12px", color: "var(--ink-muted)", wordBreak: "break-all" }}>
+                                URL: <code>{s.url}</code> • Retrieved: {when(s.retrievedAt)}
+                              </div>
+                              {s.rawTextSnippet && (
+                                <div className="evidence-excerpt" style={{ fontSize: "12px", marginTop: "8px" }}>
+                                  {s.rawTextSnippet}
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div>
+                        <h4 style={{ margin: "0 0 14px", color: "var(--ink-primary)", fontSize: "15px", fontWeight: 700 }}>
+                          Safety Guardrail: Explicit Confirmation
+                        </h4>
+                        <div
+                          style={{
+                            background: "rgba(245, 158, 11, 0.06)",
+                            border: "1px dashed rgba(245, 158, 11, 0.4)",
+                            borderRadius: "12px",
+                            padding: "22px",
+                            fontSize: "13.5px",
+                            color: "#fcd34d",
+                            lineHeight: 1.6,
+                          }}
+                        >
+                          <div style={{ fontWeight: 700, fontSize: "14px", marginBottom: "8px", display: "flex", alignItems: "center", gap: "6px" }}>
+                            ⚠️ Unconfirmed Services Notice:
+                          </div>
+                          <p style={{ margin: "0 0 12px", color: "#fef3c7" }}>
+                            Corporate event catering packages and custom birthday cake orders were not found on the open web for this business.
+                          </p>
+                          <div style={{ fontSize: "12.5px", color: "#fde68a" }}>
+                            • Marked as <strong>"Needs Confirmation"</strong> rather than fabricated by AI.<br />
+                            • Storefront Desk guarantees zero invented menu items, hours, or pricing tiers.
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* TAB 2: Outreach & Approval Queue */}
+          {activeTab === "outreach" && draft && selectedProspect && (
+            <div>
+              <div className="card">
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "16px", flexWrap: "wrap", gap: "12px" }}>
+                  <div>
+                    <h3 style={{ margin: "0 0 4px", color: "var(--ink-primary)" }}>Outreach Draft v{draft.version}</h3>
+                    <span style={{ fontSize: "13px", color: "var(--ink-muted)" }}>
+                      Recipient: <strong style={{ color: "var(--ink-primary)" }}>{draft.recipientEmail}</strong> • Commercial terms: <strong>{cents(draft.proposedPriceCents, draft.currency)}</strong>, {draft.proposedTimelineDays}-day turnaround
+                    </span>
+                  </div>
+                  <span
+                    className={`badge badge-${
+                      draft.approvalStatus === "approved"
+                        ? "green"
+                        : draft.approvalStatus === "pending_approval"
+                        ? "amber"
+                        : "red"
+                    }`}
+                    style={{ fontSize: "12px", padding: "6px 12px" }}
+                  >
+                    {draft.approvalStatus.toUpperCase()}
+                  </span>
+                </div>
+
+                {draft.approvalStatus === "expired_due_to_edit" && (
                   <div
-                    key={s._id}
                     style={{
-                      border: "1px solid var(--line)",
+                      background: "rgba(239, 68, 68, 0.12)",
+                      border: "1px solid rgba(239, 68, 68, 0.35)",
+                      color: "#fca5a5",
                       padding: "12px 16px",
                       borderRadius: "8px",
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
+                      marginBottom: "16px",
+                      fontSize: "13px",
+                      fontWeight: 600,
                     }}
                   >
+                    ⚠️ Approval Expired: This pitch was edited after operator approval. A fresh approval is required before dispatch!
+                  </div>
+                )}
+
+                {isEditingDraft ? (
+                  <div style={{ display: "flex", flexDirection: "column", gap: "14px", marginBottom: "20px" }}>
                     <div>
-                      <strong>Follow-up Attempt #{s.attemptNumber} of 2</strong>
-                      <div style={{ fontSize: "12px", color: "var(--ink-muted)" }}>
-                        Scheduled: {new Date(s.scheduledTime).toISOString().slice(0, 10)} • Created: {when(s.createdAt)}
+                      <label style={{ fontSize: "12px", fontWeight: 700, display: "block", marginBottom: "6px", color: "var(--ink-secondary)" }}>
+                        Subject Line
+                      </label>
+                      <input
+                        type="text"
+                        className="studio-input"
+                        value={editSubject}
+                        onChange={(e) => setEditSubject(e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: "12px", fontWeight: 700, display: "block", marginBottom: "6px", color: "var(--ink-secondary)" }}>
+                        Proposed Price (Cents)
+                      </label>
+                      <input
+                        type="number"
+                        className="studio-input"
+                        style={{ width: "220px" }}
+                        value={editPriceCents}
+                        onChange={(e) => setEditPriceCents(Number(e.target.value))}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: "12px", fontWeight: 700, display: "block", marginBottom: "6px", color: "var(--ink-secondary)" }}>
+                        Email Body
+                      </label>
+                      <textarea
+                        rows={12}
+                        className="studio-input"
+                        style={{ fontFamily: "var(--font-mono)", fontSize: "13px", lineHeight: 1.6 }}
+                        value={editBody}
+                        onChange={(e) => setEditBody(e.target.value)}
+                      />
+                    </div>
+                    <div style={{ display: "flex", gap: "8px" }}>
+                      <button className="btn btn-primary" onClick={handleSaveDraftEdit}>
+                        Save Changes &amp; Invalidate Prior Approval
+                      </button>
+                      <button className="btn" onClick={() => setIsEditingDraft(false)}>
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div
+                    style={{
+                      background: "var(--bg-surface-elevated)",
+                      border: "1px solid var(--line-subtle)",
+                      borderRadius: "10px",
+                      padding: "20px",
+                      marginBottom: "20px",
+                    }}
+                  >
+                    <div style={{ marginBottom: "12px", fontSize: "14px", color: "var(--ink-secondary)" }}>
+                      <strong style={{ color: "var(--ink-primary)" }}>Subject:</strong> {draft.subject}
+                    </div>
+                    <pre
+                      style={{
+                        whiteSpace: "pre-wrap",
+                        fontFamily: "var(--font-sans)",
+                        fontSize: "14px",
+                        lineHeight: 1.65,
+                        margin: 0,
+                        color: "var(--ink-primary)",
+                      }}
+                    >
+                      {draft.bodyText}
+                    </pre>
+                  </div>
+                )}
+
+                <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", alignItems: "center" }}>
+                  {draft.approvalStatus !== "approved" ? (
+                    <button
+                      className="btn btn-primary"
+                      onClick={async () => {
+                        await approveDraftMutation({ draftId: draft._id });
+                        notify("Outreach draft approved! Ready for dispatch.");
+                      }}
+                    >
+                      ✓ Approve Pitch for Sending
+                    </button>
+                  ) : (
+                    <button
+                      className="btn"
+                      style={{ color: "#f87171", borderColor: "rgba(239, 68, 68, 0.4)" }}
+                      onClick={async () => {
+                        await rejectDraftMutation({ draftId: draft._id });
+                        notify("Draft rejected.");
+                      }}
+                    >
+                      ✕ Revoke Approval
+                    </button>
+                  )}
+
+                  {!isEditingDraft && (
+                    <button className="btn" onClick={() => setIsEditingDraft(true)}>
+                      ✏️ Edit Pitch
+                    </button>
+                  )}
+
+                  <button
+                    className="btn btn-primary"
+                    style={{ background: "linear-gradient(135deg, #10b981 0%, #059669 100%)", borderColor: "#10b981" }}
+                    disabled={draft.approvalStatus !== "approved"}
+                    onClick={handleSendOutreach}
+                  >
+                    🚀 Dispatch Email via AgentMail
+                  </button>
+
+                  <span style={{ fontSize: "12px", color: "var(--ink-muted)" }}>
+                    {draft.approvalStatus === "approved"
+                      ? `Approved by ${draft.approvedBy} at ${when(draft.approvedAt ?? Date.now())}`
+                      : "Operator approval required before dispatch."}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 3: AgentMail Conversation */}
+          {activeTab === "thread" && selectedProspect && (
+            <div>
+              <div className="card">
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", flexWrap: "wrap", gap: "12px" }}>
+                  <div>
+                    <h3 style={{ margin: "0 0 4px", color: "var(--ink-primary)" }}>AgentMail Thread: {selectedProspect.name}</h3>
+                    <span style={{ fontSize: "13px", color: "var(--ink-muted)" }}>
+                      Recipient: <strong style={{ color: "var(--ink-primary)" }}>{selectedProspect.targetEmail}</strong> • Status: <strong>{selectedProspect.outreachStatus}</strong>
+                    </span>
+                  </div>
+                  <button className="btn btn-primary" onClick={handleSimulateReply}>
+                    💬 Simulate Inbound Reply &amp; Counteroffer
+                  </button>
+                </div>
+
+                <div className="thread-container">
+                  {thread?.messages?.length === 0 ? (
+                    <div style={{ textAlign: "center", padding: "40px", color: "var(--ink-muted)" }}>
+                      No messages sent yet. Approve and dispatch the initial outreach pitch!
+                    </div>
+                  ) : (
+                    thread?.messages?.map((m: any) => (
+                      <div
+                        key={m._id}
+                        className={`message-bubble ${
+                          m.direction === "outbound" ? "message-outbound" : "message-inbound"
+                        }`}
+                      >
+                        <div className="message-header">
+                          <span>
+                            <strong>{m.direction === "outbound" ? "Storefront Desk Operator" : m.from}</strong>
+                          </span>
+                          <span>{when(m.receivedOrSentAt)}</span>
+                        </div>
+                        <div style={{ fontWeight: 600, fontSize: "13px", marginBottom: "6px", color: "var(--ink-primary)" }}>
+                          Subject: {m.subject}
+                        </div>
+                        <div className="message-body">{m.text}</div>
+
+                        {m.classification && (
+                          <div style={{ marginTop: "10px" }}>
+                            <span className="badge badge-amber">
+                              AI Classification: {m.classification}
+                            </span>
+                            {m.proposedChanges && (
+                              <div
+                                style={{
+                                  marginTop: "6px",
+                                  fontSize: "12px",
+                                  background: "rgba(245, 158, 11, 0.08)",
+                                  padding: "10px 14px",
+                                  borderRadius: "6px",
+                                  border: "1px solid rgba(245, 158, 11, 0.25)",
+                                  color: "#fcd34d",
+                                }}
+                              >
+                                <strong>Proposed Terms:</strong> {m.proposedChanges.notes}
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
-                      {s.cancellationReason && (
-                        <div style={{ fontSize: "12px", color: "var(--red)", marginTop: "4px" }}>
-                          Cancelled: {s.cancellationReason}
+                    ))
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 4: Commercial Terms & Revisions */}
+          {activeTab === "proposals" && selectedProspect && (
+            <div>
+              <div className="card">
+                <h3 className="card-title">
+                  <span>Commercial Terms &amp; Scope Versions</span>
+                  <span className="badge badge-blue">Controlled Human Negotiation</span>
+                </h3>
+                <p style={{ color: "var(--ink-muted)", fontSize: "14px", marginTop: "-8px", marginBottom: "20px" }}>
+                  Storefront Desk guarantees that AI models can never autonomously bind commercial terms or accept counteroffers.
+                  Any client proposal modification triggers a version diff requiring explicit operator decision.
+                </p>
+
+                <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                  {proposalHistory?.map((p: any) => (
+                    <div
+                      key={p._id}
+                      className={`proposal-version-card ${
+                        p.humanDecisionRequired ? "highlight" : ""
+                      }`}
+                    >
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "12px", flexWrap: "wrap", gap: "10px" }}>
+                        <div>
+                          <span style={{ fontSize: "17px", fontWeight: 700, color: "var(--ink-primary)" }}>
+                            Proposal Version {p.version} — {cents(p.priceCents, p.currency)}
+                          </span>
+                          <span style={{ marginLeft: "12px", fontSize: "13px", color: "var(--ink-muted)" }}>
+                            Timeline: {p.timelineDays} days • Created: {when(p.createdAt)}
+                          </span>
+                        </div>
+                        <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                          <span
+                            className={`badge badge-${
+                              p.status === "accepted"
+                                ? "green"
+                                : p.status === "counter_proposed_by_client"
+                                ? "amber"
+                                : "blue"
+                            }`}
+                          >
+                            {p.status}
+                          </span>
+                          {p.isCommerciallyBinding && (
+                            <span className="badge badge-green">🔒 Binding Agreement</span>
+                          )}
+                        </div>
+                      </div>
+
+                      {p.changeReason && (
+                        <div style={{ fontSize: "13px", fontStyle: "italic", marginBottom: "12px", color: "#fcd34d" }}>
+                          Reason: {p.changeReason}
+                        </div>
+                      )}
+
+                      <div style={{ marginBottom: "12px" }}>
+                        <strong style={{ fontSize: "13px", color: "var(--ink-primary)" }}>Scope of Work:</strong>
+                        <ul style={{ margin: "4px 0 0", paddingLeft: "20px", fontSize: "13px", color: "var(--ink-secondary)" }}>
+                          {p.scopeItems.map((item: string, idx: number) => (
+                            <li key={idx}>{item}</li>
+                          ))}
+                        </ul>
+                      </div>
+
+                      <div style={{ fontSize: "13px", color: "var(--ink-muted)", marginBottom: "16px" }}>
+                        <strong>Terms:</strong> {p.termsSummary}
+                      </div>
+
+                      {p.humanDecisionRequired && (
+                        <div
+                          style={{
+                            background: "rgba(245, 158, 11, 0.08)",
+                            border: "1px solid rgba(245, 158, 11, 0.35)",
+                            padding: "14px 18px",
+                            borderRadius: "10px",
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            flexWrap: "wrap",
+                            gap: "12px",
+                          }}
+                        >
+                          <span style={{ fontSize: "13px", fontWeight: 600, color: "#fcd34d" }}>
+                            ⚠️ Client Counteroffer Awaiting Operator Action: Accept ${ (p.priceCents / 100).toFixed(2) } CAD with 10-day timeline?
+                          </span>
+                          <div style={{ display: "flex", gap: "8px" }}>
+                            <button
+                              className="btn btn-sm btn-primary"
+                              onClick={async () => {
+                                await acceptProposalMutation({ proposalId: p._id });
+                                notify(`Proposal v${p.version} accepted! Binding terms established.`);
+                              }}
+                            >
+                              ✓ Accept Counteroffer
+                            </button>
+                            <button
+                              className="btn btn-sm"
+                              style={{ color: "#f87171", borderColor: "rgba(239, 68, 68, 0.4)" }}
+                              onClick={async () => {
+                                await declineProposalMutation({ proposalId: p._id });
+                                notify(`Proposal v${p.version} declined.`);
+                              }}
+                            >
+                              ✕ Decline
+                            </button>
+                          </div>
+                        </div>
+                      )}
+
+                      {p.decidedBy && (
+                        <div style={{ fontSize: "12px", color: "var(--ink-muted)", marginTop: "8px" }}>
+                          Decided by {p.decidedBy} at {when(p.decidedAt ?? Date.now())}
                         </div>
                       )}
                     </div>
-                    <span
-                      className={`badge badge-${
-                        s.status === "sent" ? "green" : s.status === "pending" ? "blue" : "amber"
-                      }`}
-                    >
-                      {s.status.toUpperCase()}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div style={{ color: "var(--ink-muted)", fontSize: "13px" }}>
-                No active follow-ups scheduled for this prospect.
-              </div>
-            )}
-          </div>
-
-          <div className="card">
-            <h3 className="card-title">Immutable Reactive Activity Ledger</h3>
-            <div className="ledger-timeline">
-              {activityLedger?.map((entry: any) => (
-                <div key={entry._id} className="ledger-entry">
-                  <span className="ledger-time">{when(entry.at)}</span>
-                  <div className="ledger-content">
-                    <span className="ledger-actor">[{entry.actor}]</span>
-                    <span>{entry.summary}</span>
-                  </div>
+                  ))}
                 </div>
-              ))}
+              </div>
             </div>
-          </div>
-        </div>
-      )}
+          )}
+
+          {/* TAB 5: Live Storefront Studio */}
+          {activeTab === "preview" && (
+            <div className="card">
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", flexWrap: "wrap", gap: "10px" }}>
+                <div>
+                  <h3 style={{ margin: "0 0 4px", color: "var(--ink-primary)" }}>Live Storefront Studio</h3>
+                  <span style={{ fontSize: "13px", color: "var(--ink-muted)" }}>
+                    Preview Slug: <code>/preview/{activePreviewSlug}</code> • Live Reactive Sync
+                  </span>
+                </div>
+                <Link
+                  to={`/preview/${activePreviewSlug}`}
+                  target="_blank"
+                  className="btn btn-sm btn-primary"
+                >
+                  Open in Dedicated Window ↗
+                </Link>
+              </div>
+
+              <div style={{ height: "720px", borderRadius: "12px", overflow: "hidden", border: "1px solid var(--line-default)" }}>
+                <iframe
+                  src={`/preview/${activePreviewSlug}`}
+                  title="Live Storefront Preview"
+                  style={{ width: "100%", height: "100%", border: "none" }}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* TAB 6: Activity Ledger & Schedule */}
+          {activeTab === "ledger" && (
+            <div>
+              <div className="card">
+                <h3 className="card-title">Automated Follow-up Schedule Tracker</h3>
+                <p style={{ color: "var(--ink-muted)", fontSize: "14px", marginTop: "-8px", marginBottom: "16px" }}>
+                  In <code>assisted_followups</code> mode, at most two non-binding follow-ups are permitted.
+                  Any reply, bounce, unsubscribe, or operator pause immediately cancels all pending follow-ups.
+                </p>
+
+                {followupSchedules && followupSchedules.length > 0 ? (
+                  <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                    {followupSchedules.map((s: any) => (
+                      <div
+                        key={s._id}
+                        style={{
+                          background: "var(--bg-surface-elevated)",
+                          border: "1px solid var(--line-subtle)",
+                          padding: "14px 18px",
+                          borderRadius: "10px",
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                        }}
+                      >
+                        <div>
+                          <strong style={{ color: "var(--ink-primary)" }}>Follow-up Attempt #{s.attemptNumber} of 2</strong>
+                          <div style={{ fontSize: "12px", color: "var(--ink-muted)", marginTop: "2px" }}>
+                            Scheduled: {new Date(s.scheduledTime).toISOString().slice(0, 10)} • Created: {when(s.createdAt)}
+                          </div>
+                          {s.cancellationReason && (
+                            <div style={{ fontSize: "12px", color: "#f87171", marginTop: "4px" }}>
+                              Cancelled: {s.cancellationReason}
+                            </div>
+                          )}
+                        </div>
+                        <span
+                          className={`badge badge-${
+                            s.status === "sent" ? "green" : s.status === "pending" ? "blue" : "amber"
+                          }`}
+                        >
+                          {s.status.toUpperCase()}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div style={{ color: "var(--ink-muted)", fontSize: "13px" }}>
+                    No active follow-ups scheduled for this prospect.
+                  </div>
+                )}
+              </div>
+
+              <div className="card">
+                <h3 className="card-title">Immutable Reactive Activity Ledger</h3>
+                <div className="ledger-timeline">
+                  {activityLedger?.map((entry: any) => (
+                    <div key={entry._id} className="ledger-entry">
+                      <span className="ledger-time">{when(entry.at)}</span>
+                      <div className="ledger-content">
+                        <span className="ledger-actor">[{entry.actor}]</span>
+                        <span style={{ color: "var(--ink-secondary)" }}>{entry.summary}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+        </main>
+      </div>
     </div>
   );
 }

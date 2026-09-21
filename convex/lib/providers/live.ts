@@ -309,7 +309,7 @@ export class LiveAgentMailProvider implements AgentMailProvider {
     html?: string;
     inReplyToMessageId?: string;
   }): Promise<{ messageId: string; threadId: string }> {
-    const url = `https://api.agentmail.to/v1/inboxes/${encodeURIComponent(input.inboxId)}/messages`;
+    const url = `https://api.agentmail.to/inboxes/${encodeURIComponent(input.inboxId)}/messages`;
     const res = await fetch(url, {
       method: "POST",
       headers: {

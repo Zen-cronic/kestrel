@@ -11,7 +11,12 @@
     "typecheck": "tsc -b --noEmit",
     "test": "vitest run",
     "deploy": "npx @convex-dev/static-hosting deploy",
-    "deploy:dev": "npx @convex-dev/static-hosting upload --build"
+    "deploy:dev": "npx @convex-dev/static-hosting upload --build",
+    "film:plates": "tsx film/record-plates.ts",
+    "film:narration": "tsx film/generate-narration.ts",
+    "film:assemble": "tsx film/assemble-reel.ts",
+    "film:verify": "tsx film/verify-reel.ts",
+    "film:build": "npm run film:assemble && npm run film:verify"
   },
   "dependencies": {
     "@agentmail/convex": "^0.1.0",
@@ -35,6 +40,8 @@
     "@types/react-dom": "^19.2.7",
     "@vitejs/plugin-react": "^6.1.1",
     "convex-test": "^0.0.59",
+    "playwright": "^1.63.0",
+    "tsx": "^4.23.15",
     "typescript": "^7.0.2",
     "vite": "^8.2.2",
     "vitest": "^5.0.0"

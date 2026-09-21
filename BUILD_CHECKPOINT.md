@@ -34,9 +34,14 @@ Never paste keys into chat, commits or `hackathon.md`; `.env.local` is gitignore
 | 2 | pivot naming & schema | Storefront Desk pivot: normalized 12+ table relational schema & naming screen | `docs/NAMING.md` created; `convex/schema.ts` compiled; obsolete construction files removed | accepted in working tree |
 | 3 | fixture vertical slice & UI | 4-sponsor hero loop: Places discovery, Firecrawl grounding, OpenAI structured outputs, rendered preview, AgentMail thread, proposal versioning, activity ledger, two-mode campaigns | `npx vitest run` (14 tests across unit and convex-test), `npm run typecheck`, `npm run build` | verified green |
 | 4 | safety & policy hardening | Immutable draft approvals, invalidation on edit, 2-followup ceiling, counteroffer requires human acceptance, suppression | `convex/backend.test.ts` (7 convex-test tests) passing | verified green |
+| 5 | ui polish & seesaw motions | Mobbin patterns (Attio-style review pane, Framer-style device preview), Seesaw spring motions, tactile press states, realistic iPhone chassis, and collapsible provenance ledger | Playwright browser visual tests, 14 unit & convex-test tests, strict typecheck, and production Vite build | verified green |
+| 6 | bespoke dark studio command center | Complete redesign from generic SaaS layout to Obsidian Dark Studio Command Center: top command bar with breadcrumbs & fixture status, persistent left Target Pipeline with Places discovery & presence risk badges, right Main Stage with segmented console tabs and single-row responsive tab bar, embedded Live Storefront Studio, and high-contrast tabular typography | Playwright visual screenshot verification, 14 automated tests passing, strict zero-error typecheck | verified green |
+| 7 | spacious layout & demo director screenplay | Solved visual cramming: added collapsible pipeline sidebar toggle (`[ ◧ Pipeline (3) ]`), compact presence chips (`30% Delivery Cut`, `No Website`), executive 3-stat audit ribbon, responsive claims grid, and full-width stage canvas. Drafted complete 2:40 demo video screenplay in `docs/DEMO_RUN_OF_SHOW.md` balancing before/after cold-open with e2e pipeline proof. | Playwright visual screenshot verification across collapsed and expanded states, 14 automated tests passing | verified green |
+| 8 | automated film pipeline & provider hardening | Built reproducible demo video director (`film/`) with 8-beat Gemini TTS narration, automated 1920x1080 Playwright plate capture, ffmpeg reel assembly, and automated verification gate. Hardened live AgentMail outbound routing endpoint. Verified 21,400 active Firecrawl paid credits. | 14/14 automated tests passing, clean typecheck, 8 visual plates and 8 narration beats generated | verified green |
 
 ## Next task
 
-1. Split changes into atomic feature commits with `/commit-split`.
-2. Push to `main` of `https://github.com/Zen-cronic/change-order-desk`.
-3. Launch local app (`npm run dev:backend` and `npm run dev`) so operator can inspect progress live.
+1. Complete demo video assembly verification (`npm run film:verify`).
+2. Commit changes and push to `origin design/ui-polish-seesaw-mobbin`.
+3. Retargeted PR #1 merge review into `pivot/smb-redesign-agent`.
+4. Run static-hosting deploy drill (`npm run deploy`) and prepare final VibeApps submission form entry.
