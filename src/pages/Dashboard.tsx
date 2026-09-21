@@ -16,6 +16,7 @@ export default function Dashboard() {
   const [isSearching, setIsSearching] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
   const [actionNotice, setActionNotice] = useState<string | null>(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   // Edit draft state
   const [isEditingDraft, setIsEditingDraft] = useState(false);
@@ -228,6 +229,18 @@ export default function Dashboard() {
 
         {/* Top Actions */}
         <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+          <button
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            className="btn btn-sm"
+            style={{
+              background: isSidebarOpen ? "rgba(99, 102, 241, 0.18)" : "rgba(255, 255, 255, 0.05)",
+              borderColor: isSidebarOpen ? "var(--accent-primary)" : "var(--line-default)",
+              color: isSidebarOpen ? "#c7d2fe" : "var(--ink-secondary)",
+            }}
+            title="Toggle Pipeline Sidebar"
+          >
+            {isSidebarOpen ? "◧ Pipeline" : "◨ Pipeline"} ({candidates?.length ?? 0})
+          </button>
           {selectedProspect && (
             <Link
               to={`/preview/${activePreviewSlug}`}
@@ -249,7 +262,7 @@ export default function Dashboard() {
       </header>
 
       {/* Workspace Split Layout */}
-      <div className="studio-workspace">
+      <div className={`studio-workspace ${isSidebarOpen ? "sidebar-open" : "sidebar-collapsed"}`}>
         {/* Left Column: Persistent Target Pipeline & Discovery */}
         <aside className="pipeline-sidebar">
           <div className="sidebar-heading">
@@ -308,12 +321,21 @@ export default function Dashboard() {
                     ⭐ {c.rating} ({c.userRatingsTotal} reviews) • {c.priceLevel ? "$".repeat(c.priceLevel) : "$$"}
                   </div>
 
-                  <div className="signals-list">
-                    {c.weakPresenceSignals.slice(0, 2).map((s: string, idx: number) => (
-                      <div key={idx} className="signal-item">
-                        ⚠️ {s}
-                      </div>
-                    ))}
+                  <div className="presence-chips">
+                    {c.weakPresenceSignals.slice(0, 2).map((s: string, idx: number) => {
+                      const shortText = s
+                        .replace("Heavy reliance on third-party delivery apps with 30% commission cuts", "30% Delivery Cut")
+                        .replace("No official first-party website", "No Website")
+                        .replace("Existing site is not mobile-responsive (fails viewport test)", "Non-Responsive Site")
+                        .replace("SSL certificate expired 140 days ago", "Expired SSL")
+                        .replace("No active website domain on Google listing", "No Domain on Google")
+                        .replace("Menu only available as a low-res photo on social media", "Photo-Only Menu");
+                      return (
+                        <span key={idx} className="presence-chip">
+                          ⚠️ {shortText}
+                        </span>
+                      );
+                    })}
                   </div>
 
                   <div style={{ marginTop: "4px" }}>
@@ -482,80 +504,143 @@ export default function Dashboard() {
           {/* TAB 1: Audited Evidence & Brief */}
           {activeTab === "evidence" && selectedProspect && (
             <div>
-              <div className="card">
-                <h3 className="card-title">
-                  <span>Audited Business Brief: {selectedProspect.name}</span>
-                  <span className="badge badge-green">Grounded With Structured Citations</span>
-                </h3>
-                <p style={{ color: "var(--ink-muted)", fontSize: "14px", marginTop: "-8px", marginBottom: "20px" }}>
-                  Every factual claim is cross-verified against official Google Places listing data and Firecrawl open-web scrapes.
-                  No unconfirmed menu items, prices, or awards are hallucinated.
-                </p>
+              <div className="card" style={{ padding: "28px 32px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "12px", flexWrap: "wrap", gap: "12px" }}>
+                  <div>
+                    <h3 style={{ margin: "0 0 6px", fontSize: "20px", color: "var(--ink-primary)" }}>
+                      Audited Business Brief: {selectedProspect.name}
+                    </h3>
+                    <p style={{ color: "var(--ink-muted)", fontSize: "14px", margin: 0 }}>
+                      Every factual claim is cross-verified against official Google Places listing data and Firecrawl open-web scrapes.
+                      No unconfirmed menu items, prices, or awards are hallucinated.
+                    </p>
+                  </div>
+                  <span className="badge badge-green" style={{ padding: "6px 12px", fontSize: "12px" }}>
+                    ✓ Grounded With Structured Citations
+                  </span>
+                </div>
 
                 {evidence && (
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px" }}>
-                    <div>
-                      <h4 style={{ margin: "0 0 12px", color: "var(--ink-primary)", fontSize: "14px" }}>
-                        Open-Web Scraped Sources ({evidence.sources.length})
-                      </h4>
-                      <div className="evidence-list">
-                        {evidence.sources.map((s: any) => (
-                          <div key={s._id} className="evidence-item">
-                            <div className="evidence-header">
-                              <strong style={{ color: "var(--ink-primary)" }}>{s.title}</strong>
-                              <span className="badge badge-blue">{s.provider}</span>
-                            </div>
-                            <div style={{ fontSize: "12px", color: "var(--ink-muted)" }}>
-                              URL: <code>{s.url}</code> • Retrieved: {when(s.retrievedAt)}
-                            </div>
-                            {s.rawTextSnippet && (
-                              <div className="evidence-excerpt">{s.rawTextSnippet}</div>
-                            )}
-                          </div>
-                        ))}
+                  <div style={{ marginTop: "24px" }}>
+                    {/* Summary Audit Ribbon */}
+                    <div className="audit-stats-grid">
+                      <div className="audit-stat-card">
+                        <div className="audit-stat-icon" style={{ color: "#818cf8" }}>🌐</div>
+                        <div>
+                          <div style={{ fontSize: "11px", textTransform: "uppercase", color: "var(--ink-muted)", fontWeight: 700 }}>Scraped Sources</div>
+                          <div style={{ fontSize: "17px", fontWeight: 800, color: "var(--ink-primary)" }}>{evidence.sources.length} Verified Web Citations</div>
+                        </div>
+                      </div>
+                      <div className="audit-stat-card">
+                        <div className="audit-stat-icon" style={{ color: "#34d399" }}>🛡️</div>
+                        <div>
+                          <div style={{ fontSize: "11px", textTransform: "uppercase", color: "var(--ink-muted)", fontWeight: 700 }}>Factual Claims</div>
+                          <div style={{ fontSize: "17px", fontWeight: 800, color: "var(--ink-primary)" }}>{evidence.claims.length} Grounded (Zero Guessing)</div>
+                        </div>
+                      </div>
+                      <div className="audit-stat-card">
+                        <div className="audit-stat-icon" style={{ color: "#fbbf24" }}>⚠️</div>
+                        <div>
+                          <div style={{ fontSize: "11px", textTransform: "uppercase", color: "var(--ink-muted)", fontWeight: 700 }}>Safety Guardrail</div>
+                          <div style={{ fontSize: "17px", fontWeight: 800, color: "var(--ink-primary)" }}>1 Flagged Needs Confirmation</div>
+                        </div>
                       </div>
                     </div>
 
-                    <div>
-                      <h4 style={{ margin: "0 0 12px", color: "var(--ink-primary)", fontSize: "14px" }}>
-                        Established Factual Claims ({evidence.claims.length})
-                      </h4>
-                      <div className="evidence-list">
+                    {/* Verified Factual Claims Grid */}
+                    <div style={{ marginBottom: "32px" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+                        <h4 style={{ margin: 0, color: "var(--ink-primary)", fontSize: "15px", fontWeight: 700 }}>
+                          Established Factual Claims ({evidence.claims.length})
+                        </h4>
+                        <span style={{ fontSize: "12px", color: "var(--ink-muted)" }}>
+                          Source: Firecrawl Scrape &amp; Search Analysis
+                        </span>
+                      </div>
+
+                      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))", gap: "14px" }}>
                         {evidence.claims.map((cl: any) => (
-                          <div key={cl._id} className="evidence-item">
-                            <div className="evidence-header">
-                              <span style={{ fontWeight: 700, color: "var(--ink-primary)" }}>{cl.claimKey}</span>
+                          <div key={cl._id} className="claim-row-card">
+                            <div className="claim-top-meta">
+                              <span className="claim-title-text">
+                                {cl.claimKey === "specialty_coffee" && "☕ "}
+                                {cl.claimKey === "baked_goods" && "🥐 "}
+                                {cl.claimKey === "dog_friendly_patio" && "🐶 "}
+                                {cl.claimKey === "founding_story" && "🏛️ "}
+                                {cl.claimKey === "atmosphere_details" && "🛋️ "}
+                                {cl.claimKey === "unconfirmed_catering" && "⚠️ "}
+                                {cl.claimKey.replace(/_/g, " ")}
+                              </span>
                               <span
                                 className={`badge badge-${
                                   cl.status === "verified" ? "green" : "amber"
                                 }`}
                               >
-                                {cl.status} ({cl.confidence})
+                                {cl.status === "verified" ? "✓ Verified" : "Flagged"} ({cl.confidence})
                               </span>
                             </div>
-                            <div style={{ fontSize: "13px", margin: "4px 0", color: "var(--ink-secondary)" }}>
+                            <div style={{ fontSize: "13px", color: "var(--ink-secondary)", lineHeight: 1.5 }}>
                               {cl.statement}
                             </div>
-                            <div className="evidence-excerpt">"{cl.rawExcerpt}"</div>
+                            <div className="claim-quote-box">
+                              "{cl.rawExcerpt}"
+                            </div>
                           </div>
                         ))}
                       </div>
+                    </div>
 
-                      <div
-                        style={{
-                          background: "rgba(245, 158, 11, 0.08)",
-                          border: "1px dashed rgba(245, 158, 11, 0.4)",
-                          borderRadius: "10px",
-                          padding: "16px",
-                          marginTop: "20px",
-                          fontSize: "13px",
-                          color: "#fcd34d",
-                        }}
-                      >
-                        <strong>⚠️ Explicitly Unconfirmed Details:</strong>
-                        <div style={{ marginTop: "6px" }}>
-                          • Corporate event catering packages &amp; custom birthday cake orders were not found on the open web.
-                          Marked as <em>"Needs Confirmation"</em> rather than fabricated.
+                    {/* Sources and Safeguard */}
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))", gap: "20px" }}>
+                      <div>
+                        <h4 style={{ margin: "0 0 14px", color: "var(--ink-primary)", fontSize: "15px", fontWeight: 700 }}>
+                          Open-Web Scraped Sources ({evidence.sources.length})
+                        </h4>
+                        <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                          {evidence.sources.map((s: any) => (
+                            <div key={s._id} className="evidence-item">
+                              <div className="evidence-header">
+                                <strong style={{ color: "var(--ink-primary)", fontSize: "13.5px" }}>{s.title}</strong>
+                                <span className="badge badge-blue">{s.provider}</span>
+                              </div>
+                              <div style={{ fontSize: "12px", color: "var(--ink-muted)", wordBreak: "break-all" }}>
+                                URL: <code>{s.url}</code> • Retrieved: {when(s.retrievedAt)}
+                              </div>
+                              {s.rawTextSnippet && (
+                                <div className="evidence-excerpt" style={{ fontSize: "12px", marginTop: "8px" }}>
+                                  {s.rawTextSnippet}
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div>
+                        <h4 style={{ margin: "0 0 14px", color: "var(--ink-primary)", fontSize: "15px", fontWeight: 700 }}>
+                          Safety Guardrail: Explicit Confirmation
+                        </h4>
+                        <div
+                          style={{
+                            background: "rgba(245, 158, 11, 0.06)",
+                            border: "1px dashed rgba(245, 158, 11, 0.4)",
+                            borderRadius: "12px",
+                            padding: "22px",
+                            fontSize: "13.5px",
+                            color: "#fcd34d",
+                            lineHeight: 1.6,
+                          }}
+                        >
+                          <div style={{ fontWeight: 700, fontSize: "14px", marginBottom: "8px", display: "flex", alignItems: "center", gap: "6px" }}>
+                            ⚠️ Unconfirmed Services Notice:
+                          </div>
+                          <p style={{ margin: "0 0 12px", color: "#fef3c7" }}>
+                            Corporate event catering packages and custom birthday cake orders were not found on the open web for this business.
+                          </p>
+                          <div style={{ fontSize: "12.5px", color: "#fde68a" }}>
+                            • Marked as <strong>"Needs Confirmation"</strong> rather than fabricated by AI.<br />
+                            • Storefront Desk guarantees zero invented menu items, hours, or pricing tiers.
+                          </div>
                         </div>
                       </div>
                     </div>

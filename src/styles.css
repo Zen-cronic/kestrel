@@ -180,25 +180,39 @@ body {
 /* Workspace Split Columns */
 .studio-workspace {
   display: grid;
-  grid-template-columns: 360px 1fr;
+  grid-template-columns: 310px 1fr;
   flex: 1;
   min-height: calc(100vh - 60px);
+  transition: grid-template-columns var(--duration-normal) var(--ease-spring);
+}
+
+.studio-workspace.sidebar-collapsed {
+  grid-template-columns: 1fr;
+}
+
+.studio-workspace.sidebar-collapsed .pipeline-sidebar {
+  display: none;
 }
 
 @media (max-width: 1024px) {
   .studio-workspace {
     grid-template-columns: 1fr;
   }
+  .studio-workspace .pipeline-sidebar {
+    display: none;
+  }
 }
 
 /* Pipeline Sidebar */
 .pipeline-sidebar {
   border-right: 1px solid var(--line-subtle);
-  background: rgba(15, 21, 35, 0.4);
-  padding: 20px;
+  background: rgba(15, 21, 35, 0.45);
+  padding: 22px 18px;
   display: flex;
   flex-direction: column;
   gap: 16px;
+  max-height: calc(100vh - 60px);
+  overflow-y: auto;
 }
 
 .sidebar-heading {
@@ -250,14 +264,14 @@ body {
 .candidate-item-card {
   background: var(--bg-surface);
   border: 1px solid var(--line-subtle);
-  border-radius: 12px;
-  padding: 16px;
+  border-radius: 10px;
+  padding: 13px 14px;
   cursor: pointer;
   transition: all var(--duration-normal) var(--ease-spring);
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
 .candidate-item-card:hover {
@@ -276,20 +290,44 @@ body {
   content: "";
   position: absolute;
   left: 0;
-  top: 12px;
-  bottom: 12px;
+  top: 10px;
+  bottom: 10px;
   width: 3px;
   background: var(--accent-primary);
   border-radius: 0 3px 3px 0;
 }
 
+/* Presence Risk Chips */
+.presence-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin: 2px 0;
+}
+
+.presence-chip {
+  font-size: 11px;
+  font-weight: 600;
+  background: rgba(245, 158, 11, 0.08);
+  color: #fbbf24;
+  padding: 2px 7px;
+  border-radius: 5px;
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
 /* Stage Main Area */
 .stage-main {
-  padding: 24px 32px;
+  padding: 32px 48px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 24px;
+  max-width: 1440px;
+  margin: 0 auto;
+  width: 100%;
 }
 
 /* Selected Prospect Hero Card */
@@ -552,6 +590,81 @@ body {
   line-height: 1.55;
   white-space: pre-wrap;
   color: var(--ink-primary);
+}
+
+/* Audit Stats Ribbon */
+.audit-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.audit-stat-card {
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--line-subtle);
+  border-radius: 12px;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.audit-stat-icon {
+  font-size: 22px;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.04);
+  flex-shrink: 0;
+}
+
+/* Claims Grid */
+.claim-row-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--line-subtle);
+  border-radius: 12px;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: all var(--duration-fast) var(--ease-spring);
+}
+
+.claim-row-card:hover {
+  border-color: var(--line-default);
+  background: var(--bg-surface-hover);
+}
+
+.claim-top-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.claim-title-text {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink-primary);
+  text-transform: capitalize;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.claim-quote-box {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: #94a3b8;
+  background: #080c14;
+  padding: 10px 14px;
+  border-radius: 6px;
+  border-left: 3px solid var(--accent-primary);
 }
 
 /* Evidence Items */
