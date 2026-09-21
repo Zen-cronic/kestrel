@@ -6,7 +6,7 @@
 - **Live app:** not deployed
 - **Repo:** https://github.com/Zen-cronic/change-order-desk
 - **Frontend:** Convex static hosting
-- **Convex deployment:** not deployed (anonymous local dev deployment during build)
+- **Convex deployment:** dev:glad-pony-138 (cloud development deployment under team kaung-zin-hein / storefront-desk)
 - **Components:** @convex-dev/static-hosting, @agentmail/convex, @firecrawl/firecrawl-convex, @convex-dev/rate-limiter, @convex-dev/agent
 - **Convex features:** queries, mutations, internal functions, actions, internal actions, scheduled functions, HTTP actions, indexes, argument validators, components
 - **Auth:** none
