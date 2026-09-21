@@ -32,24 +32,55 @@ export default function WebsitePreview() {
     <div style={{ background: "#0f172a", minHeight: "100vh" }}>
       {/* Top Viewport & Operator Inspector Bar */}
       <div className="preview-viewport-bar">
-        <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-          <Link to="/" style={{ color: "#94a3b8", textDecoration: "none", fontSize: "13px", fontWeight: 600 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "16px", flexWrap: "wrap" }}>
+          <Link
+            to="/"
+            style={{
+              color: "#94a3b8",
+              textDecoration: "none",
+              fontSize: "13px",
+              fontWeight: 600,
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              padding: "4px 8px",
+              borderRadius: "6px",
+              transition: "all var(--duration-fast) var(--ease-spring)",
+            }}
+          >
             ← Storefront Desk
           </Link>
-          <span style={{ color: "#475569" }}>|</span>
-          <span style={{ fontSize: "13px", fontWeight: 700, color: "white" }}>
-            {site.businessIdentity.name} (Live Generated Preview v{site.version})
+          <span style={{ color: "rgba(255,255,255,0.2)" }}>|</span>
+          <span style={{ fontSize: "14px", fontWeight: 700, color: "white", letterSpacing: "-0.01em" }}>
+            {site.businessIdentity.name}
           </span>
           <span
             style={{
-              background: "#166534",
-              color: "#bbf7d0",
+              background: "rgba(255,255,255,0.08)",
+              color: "#cbd5e1",
               fontSize: "11px",
               padding: "2px 8px",
-              borderRadius: "4px",
-              fontWeight: 700,
+              borderRadius: "999px",
+              fontWeight: 600,
             }}
           >
+            v{site.version} • {site.theme.styleVariant}
+          </span>
+          <span
+            style={{
+              background: "#14532d",
+              color: "#86efac",
+              fontSize: "11px",
+              padding: "2px 8px",
+              borderRadius: "999px",
+              fontWeight: 700,
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "5px",
+              border: "1px solid #166534",
+            }}
+          >
+            <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#4ade80" }} />
             VERIFIED SMB PREVIEW
           </span>
         </div>
@@ -66,21 +97,26 @@ export default function WebsitePreview() {
               className={`viewport-btn ${viewport === "mobile" ? "active" : ""}`}
               onClick={() => setViewport("mobile")}
             >
-              📱 Mobile (375px)
+              📱 Mobile (390px)
             </button>
           </div>
 
           <button
             onClick={() => setShowEvidenceDrawer(!showEvidenceDrawer)}
             style={{
-              background: showEvidenceDrawer ? "#0f766e" : "#334155",
+              background: showEvidenceDrawer ? "#0f766e" : "#1e293b",
               color: "white",
-              border: "none",
+              border: "1px solid rgba(255, 255, 255, 0.15)",
               padding: "6px 14px",
-              borderRadius: "6px",
+              borderRadius: "8px",
               fontSize: "13px",
               fontWeight: 600,
               cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              transition: "all var(--duration-fast) var(--ease-spring)",
+              boxShadow: showEvidenceDrawer ? "0 0 0 2px rgba(15, 118, 110, 0.4)" : "none",
             }}
           >
             📑 {showEvidenceDrawer ? "Hide Grounding Citations" : "Inspect Grounding Citations"}
@@ -92,38 +128,47 @@ export default function WebsitePreview() {
       {showEvidenceDrawer && (
         <div
           style={{
-            background: "#1e293b",
+            background: "#090d16",
             color: "#f8fafc",
-            borderBottom: "2px solid #0f766e",
-            padding: "16px 24px",
+            borderBottom: "1px solid rgba(15, 118, 110, 0.4)",
+            padding: "20px 24px",
             fontSize: "13px",
-            lineHeight: 1.5,
+            lineHeight: 1.55,
+            animation: "fadeSlideUp var(--duration-normal) var(--ease-spring) both",
           }}
         >
-          <div style={{ maxWidth: "1000px", margin: "0 auto" }}>
-            <strong style={{ color: "#38bdf8", fontSize: "14px" }}>
-              🔍 Operator Provenance Ledger:
-            </strong>
-            <p style={{ margin: "4px 0 10px", color: "#cbd5e1" }}>
-              This digital storefront is constructed strictly from verified evidence. All section content is grounded in real Google Places listing data and Firecrawl open-web scrapes.
-            </p>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "16px" }}>
-              <div style={{ background: "#0f172a", padding: "10px", borderRadius: "6px" }}>
-                <strong style={{ color: "#4ade80" }}>✓ Hero & Coffee Roasts:</strong>
-                <div style={{ fontSize: "12px", marginTop: "4px", color: "#94a3b8" }}>
+          <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "12px", flexWrap: "wrap", gap: "8px" }}>
+              <strong style={{ color: "#38bdf8", fontSize: "14px", letterSpacing: "-0.01em" }}>
+                🔍 Operator Grounding &amp; Provenance Ledger
+              </strong>
+              <span style={{ fontSize: "12px", color: "#94a3b8" }}>
+                Strict Rule: Never invent hours, roasts, or offerings not verified from public listings.
+              </span>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "16px" }}>
+              <div style={{ background: "#1e293b", padding: "14px", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.06)" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "#4ade80", fontWeight: 700, fontSize: "13px" }}>
+                  <span>✓</span> Hero &amp; Coffee Roasts
+                </div>
+                <div style={{ fontSize: "12px", marginTop: "6px", color: "#94a3b8" }}>
                   Grounded in Firecrawl scrape of West Queen West single-origin Ethiopian/Colombian roast profiles.
                 </div>
               </div>
-              <div style={{ background: "#0f172a", padding: "10px", borderRadius: "6px" }}>
-                <strong style={{ color: "#4ade80" }}>✓ Hours & Dog-Friendly Patio:</strong>
-                <div style={{ fontSize: "12px", marginTop: "4px", color: "#94a3b8" }}>
+              <div style={{ background: "#1e293b", padding: "14px", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.06)" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "#4ade80", fontWeight: 700, fontSize: "13px" }}>
+                  <span>✓</span> Hours &amp; Dog-Friendly Patio
+                </div>
+                <div style={{ fontSize: "12px", marginTop: "6px", color: "#94a3b8" }}>
                   Verified from official Google Places operating hours and verified sidewalk patio statements.
                 </div>
               </div>
-              <div style={{ background: "#0f172a", padding: "10px", borderRadius: "6px" }}>
-                <strong style={{ color: "#facc15" }}>⚠️ Unsupported Items:</strong>
-                <div style={{ fontSize: "12px", marginTop: "4px", color: "#94a3b8" }}>
-                  Corporate catering package is unconfirmed on the public web; explicitly labeled as needs confirmation.
+              <div style={{ background: "#1e293b", padding: "14px", borderRadius: "10px", border: "1px solid rgba(202, 138, 4, 0.3)" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "#facc15", fontWeight: 700, fontSize: "13px" }}>
+                  <span>⚠️</span> Unsupported Offerings
+                </div>
+                <div style={{ fontSize: "12px", marginTop: "6px", color: "#94a3b8" }}>
+                  Corporate catering is unconfirmed on public web; explicitly labeled as needs confirmation.
                 </div>
               </div>
             </div>
@@ -136,24 +181,22 @@ export default function WebsitePreview() {
         style={{
           display: "flex",
           justifyContent: "center",
-          padding: viewport === "mobile" ? "32px 16px" : "0",
-          transition: "all 0.2s ease",
+          padding: viewport === "mobile" ? "24px 16px 64px" : "0",
+          transition: "all var(--duration-smooth) var(--ease-spring)",
         }}
       >
         <div
-          style={{
-            width: viewport === "mobile" ? "375px" : "100%",
-            maxWidth: viewport === "mobile" ? "375px" : "100%",
-            minHeight: viewport === "mobile" ? "812px" : "100vh",
-            background: "#faf7f2",
-            borderRadius: viewport === "mobile" ? "32px" : "0",
-            boxShadow: viewport === "mobile" ? "0 25px 50px -12px rgba(0,0,0,0.5)" : "none",
-            overflow: "hidden",
-            border: viewport === "mobile" ? "8px solid #334155" : "none",
-          }}
+          className={viewport === "mobile" ? "phone-chassis" : ""}
+          style={viewport === "desktop" ? { width: "100%", minHeight: "100vh", background: "#faf7f2" } : undefined}
         >
-          {/* Rendered Storefront Site */}
-          <div className="storefront-site">
+          {viewport === "mobile" && (
+            <div className="phone-notch-bar">
+              <div className="phone-island" />
+            </div>
+          )}
+          <div className={viewport === "mobile" ? "phone-screen" : ""}>
+            {/* Rendered Storefront Site */}
+            <div className="storefront-site">
             {/* Site Navigation */}
             <header
               style={{
@@ -430,5 +473,6 @@ export default function WebsitePreview() {
         </div>
       </div>
     </div>
+  </div>
   );
 }
