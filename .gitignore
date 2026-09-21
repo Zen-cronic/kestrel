@@ -15,11 +15,12 @@ build/
 playwright-report/
 test-results/
 recordings/
-# harness-local settings and caches
-.claude/settings.local.json
-.codex/config.toml
-.codex/auth.json
-.agents/.cache/
+
+.agents
+.claude
+.codex
+.gemini
+
 .DS_Store
 *.log
 npm-debug.log*

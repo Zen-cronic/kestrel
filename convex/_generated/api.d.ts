@@ -8,19 +8,26 @@
  * @module
  */
 
-import type * as changeOrders from "../changeOrders.js";
+import type * as activity from "../activity.js";
+import type * as campaigns from "../campaigns.js";
 import type * as demo from "../demo.js";
+import type * as discovery from "../discovery.js";
+import type * as evidence from "../evidence.js";
+import type * as followups from "../followups.js";
+import type * as generator from "../generator.js";
 import type * as http from "../http.js";
-import type * as inbound from "../inbound.js";
 import type * as lib_money from "../lib/money.js";
+import type * as lib_providers_fixture from "../lib/providers/fixture.js";
 import type * as lib_providers_index from "../lib/providers/index.js";
 import type * as lib_providers_live from "../lib/providers/live.js";
-import type * as lib_providers_mock from "../lib/providers/mock.js";
 import type * as lib_providers_types from "../lib/providers/types.js";
 import type * as lib_replyText from "../lib/replyText.js";
-import type * as mail from "../mail.js";
-import type * as pricing from "../pricing.js";
-import type * as projects from "../projects.js";
+import type * as outreach from "../outreach.js";
+import type * as previews from "../previews.js";
+import type * as proposals from "../proposals.js";
+import type * as prospects from "../prospects.js";
+import type * as threads from "../threads.js";
+import type * as workspaces from "../workspaces.js";
 
 import type {
   ApiFromModules,
@@ -29,19 +36,26 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
-  changeOrders: typeof changeOrders;
+  activity: typeof activity;
+  campaigns: typeof campaigns;
   demo: typeof demo;
+  discovery: typeof discovery;
+  evidence: typeof evidence;
+  followups: typeof followups;
+  generator: typeof generator;
   http: typeof http;
-  inbound: typeof inbound;
   "lib/money": typeof lib_money;
+  "lib/providers/fixture": typeof lib_providers_fixture;
   "lib/providers/index": typeof lib_providers_index;
   "lib/providers/live": typeof lib_providers_live;
-  "lib/providers/mock": typeof lib_providers_mock;
   "lib/providers/types": typeof lib_providers_types;
   "lib/replyText": typeof lib_replyText;
-  mail: typeof mail;
-  pricing: typeof pricing;
-  projects: typeof projects;
+  outreach: typeof outreach;
+  previews: typeof previews;
+  proposals: typeof proposals;
+  prospects: typeof prospects;
+  threads: typeof threads;
+  workspaces: typeof workspaces;
 }>;
 
 /**
@@ -75,4 +89,5 @@ export declare const components: {
   agentmail: import("@agentmail/convex/_generated/component.js").ComponentApi<"agentmail">;
   firecrawl: import("@firecrawl/firecrawl-convex/_generated/component.js").ComponentApi<"firecrawl">;
   rateLimiter: import("@convex-dev/rate-limiter/_generated/component.js").ComponentApi<"rateLimiter">;
+  agent: import("@convex-dev/agent/_generated/component.js").ComponentApi<"agent">;
 };
