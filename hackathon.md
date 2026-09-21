@@ -1,18 +1,18 @@
 # Hackathon log
 
-- **Project:** Change Order Desk
+- **Project:** Storefront Desk (Provisional)
 - **Event:** Convex All Gas Hackathon
-- **What it does:** A renovation gets its own inbox; a homeowner's "can we also…?" becomes a priced change order that both parties approve by replying, and the live ledger of scope, price and schedule is the record.
+- **What it does:** An agent-assisted customer-acquisition workspace for North American SMBs with weak web presence, combining Google Places discovery, Firecrawl open-web citations, OpenAI structured briefs and specifications, and operator-owned AgentMail threads.
 - **Live app:** not deployed
 - **Repo:** https://github.com/Zen-cronic/change-order-desk
 - **Frontend:** Convex static hosting
-- **Convex deployment:** not deployed (anonymous local dev deployment at http://127.0.0.1:3210 during the build)
-- **Components:** @convex-dev/static-hosting, @agentmail/convex, @firecrawl/firecrawl-convex, @convex-dev/rate-limiter
-- **Convex features:** queries, mutations, internal functions, actions, scheduled functions, HTTP actions, indexes, argument validators, components
+- **Convex deployment:** not deployed (anonymous local dev deployment during build)
+- **Components:** @convex-dev/static-hosting, @agentmail/convex, @firecrawl/firecrawl-convex, @convex-dev/rate-limiter, @convex-dev/agent
+- **Convex features:** queries, mutations, internal functions, actions, internal actions, scheduled functions, HTTP actions, indexes, argument validators, components
 - **Auth:** none
-- **AI models:** none (PROVIDER_MODE=mock; `gpt-5.6-terra` wired behind the OpenAI provider interface for live mode)
+- **AI models:** gpt-5.6-terra (PROVIDER_MODE=fixture default; OpenAI Responses API structured outputs via @convex-dev/agent in live mode)
 - **Started:** 2026-09-04T21:32:04Z
-- **Last updated:** 2026-09-04T21:47:22Z
+- **Last updated:** 2026-09-21T18:35:00Z
 
 ## Log
 
@@ -21,3 +21,6 @@ Started the repository with hygiene before any code: `.gitignore` for secrets, d
 
 ### 2026-09-04 - b6237f7
 Scaffolded the app: Vite + React frontend, Convex backend with the official components registered in `convex/convex.config.ts` (`@convex-dev/static-hosting`, `@agentmail/convex`, `@firecrawl/firecrawl-convex`, `@convex-dev/rate-limiter`), schema in `convex/schema.ts` (projects, parties, changeOrders, immutable revisions, approvals keyed by revision + party, ledger, inboundMessages, referencePrices, supplierQuotes). Change-order state machine in `convex/changeOrders.ts` (draft → awaiting_approval → approved/rejected; stale-revision and duplicate decisions rejected). Inbound email path in `convex/inbound.ts` (idempotent on message id; quoted history stripped in `convex/lib/replyText.ts`; approvals require an explicit word plus the party's token — the model never gates money). Pricing engine in `convex/pricing.ts` (rate card → supplier quote → stocked material → cached reference → crawl → unpriced-and-flagged). Provider interfaces with labelled mocks in `convex/lib/providers/` (OpenAI Responses API structured-output client wired for live mode). HTTP routes in `convex/http.ts`: `/agentmail/webhook`, `/health`, static-site catch-all. Demo project + fixtures in `convex/demo.ts` (a labelled demo contractor auto-approves ~10 s after a change order is sent). Ran the official setup: Convex plugin for Claude Code, `npx convex ai-files install`, and this build-log skill. Smoke test on the local deployment: homeowner request → priced draft (one line flagged unpriced, not guessed) → sent → both approvals → approved; duplicate reply idempotent. Unit tests for cent arithmetic and reply parsing in `tests/money.test.ts`.
+
+### 2026-09-21 - 082c371
+Pivoted the application to Storefront Desk (provisional), targeting North American SMBs with missing or weak online presence, with an initial demo wedge for independent restaurants and cafés (`docs/NAMING.md`). Replaced the construction domain model with a normalized 12-table relational schema (`convex/schema.ts`): workspaces, campaigns, discoverySearches, placesCandidates, prospects, sourceDocuments, evidenceClaims, businessBriefs, websiteSpecs, outreachDrafts, agentMailThreads, agentMailMessages, proposals, followupSchedules, and activityLedger. Added `@convex-dev/agent` to registered components in `convex/convex.config.ts`. Implemented the 4-sponsor hero loop: Google Places candidate discovery (`convex/discovery.ts`), Firecrawl web citations and claim verification (`convex/evidence.ts`), OpenAI structured business briefs and website specifications (`convex/generator.ts`), shareable reactive website preview (`convex/previews.ts`, `src/pages/WebsitePreview.tsx`), operator-controlled pitch dispatch via AgentMail (`convex/outreach.ts`), threaded reply ingestion with autonomous counteroffer classification (`convex/threads.ts`), and non-binding commercial proposal versioning requiring explicit human operator approval (`convex/proposals.ts`). Enforced campaign safety modes: `manual` and `assisted_followups` with a hard 2-followup ceiling and automatic cancellation on reply or unsubscribe (`convex/followups.ts`). Added comprehensive test coverage with 14 automated tests passing across `tests/money.test.ts`, `tests/provider_fixtures.test.ts`, and `convex/backend.test.ts` using `convex-test` in the edge runtime.

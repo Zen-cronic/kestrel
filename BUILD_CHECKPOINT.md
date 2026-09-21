@@ -1,39 +1,42 @@
-# BUILD_CHECKPOINT — Change Order Desk
+# BUILD_CHECKPOINT — Storefront Desk (Provisional)
 
-**Status headline (2026-09-04 17:47 EDT):** packet 1 (scaffold + hero path) accepted at `b6237f7`; hero path runs end to end in mock mode on the local deployment; typecheck, tests and build green. No deployment to convex.site yet (operator's Convex account needed). Next: packet 2 (AgentMail live) is credential-gated; packet 5 (design-direction + two-window UI) can proceed in mock mode.
+**Status headline (2026-09-21 14:35 EDT):** Pivot from Change Order Desk to Storefront Desk completed in `pivot/smb-redesign-agent`. Full deterministic fixture hero loop runs end to end; schema, approvals, grounding citations, shareable preview, autonomous counteroffer classification, follow-up ceiling, and activity ledger verified. Strict typecheck, 14 automated tests (including `convex-test`), and production Vite build are all green.
 
-**Current accepted state:** commit `b6237f7` on `main` (private remote `origin`), verified on the anonymous local deployment in mock mode.
+**Current accepted state:** Commit `082c371` on `pivot/smb-redesign-agent`, verified with 14 automated tests (unit + convex-test), strict typecheck, and Vite production build.
 
-Concept lock: PROVISIONAL (operator pre-authorization 2026-09-04; revisable). Strategy, decision brief, flip conditions and research live in the suite repo at `hackathon-agent/hackathons/convex-allgas-2026/state.md`.
+Concept lock: PROVISIONAL — Storefront Desk (operator-approved pivot 2026-09-21). Strategy and decision brief live in `docs/NAMING.md` and `docs/DEMO.md`.
 
 ## Human gates — operator actions (exact steps)
 
-None of these blocks local development in `PROVIDER_MODE=mock`. In order of urgency:
+None of these blocks local development or judging in `PROVIDER_MODE=fixture`. In order of urgency:
 
-1. ~~Register on Luma~~ **done 2026-09-04.** Next: **check the Luma confirmation email** (and Convex Discord `#hackathon`) for the **Firecrawl 20k-credit promo code** (prior editions used `MODERNSTACK` / `TANSTACK10K` at https://firecrawl.dev/signup).
-2. **Convex account + project** — https://dashboard.convex.dev/signup (GitHub login; Free plan; no card). Then in this repo: `npx convex login` → `npx convex dev` (choose *create a new project*: `change-order-desk`). Expected: `.env.local` gains `CONVEX_DEPLOYMENT` + `VITE_CONVEX_URL`; dashboard shows the tables from `convex/schema.ts`.
-3. **AgentMail** — https://console.agentmail.to (Free: 3 inboxes, 100 emails/day, no card). Create an API key. Set: `npx convex env set AGENTMAIL_API_KEY <key>`; create a webhook in the console pointing at `https://<deployment>.convex.site/agentmail/webhook` for `message.received` (+ `message.bounced`), copy the signing secret → `npx convex env set AGENTMAIL_WEBHOOK_SECRET <whsec>`. Expected: sending any email to the project inbox address shown on a project page creates an inbound row in the dashboard.
-4. **Firecrawl** — https://www.firecrawl.dev/signin (Free: 1,000 credits/month, no card; add the hackathon code if provided). Create an API key → `npx convex env set FIRECRAWL_API_KEY <key>`. Expected: a change-order line shows a "reference" price with a URL and fetched-at.
-5. **OpenAI** — https://platform.openai.com/api-keys → project-scoped key; confirm prepaid balance ≥ US$10 (expected spend < US$20 total). `npx convex env set OPENAI_API_KEY <key>` and `npx convex env set OPENAI_MODEL gpt-5.6-terra` and `npx convex env set PROVIDER_MODE live`. Expected: a messy request email yields extracted lines in the dashboard's `revisions` table with `source.type` values.
-6. **Demo inbound secret** — `npx convex env set DEMO_INBOUND_SECRET <random-32-chars>` (used only by the labelled fixture route on the demo project).
-7. **Production deploy (human gate)** — `npm run deploy` (runs `npx @convex-dev/static-hosting deploy`: build + `convex deploy` + upload). Expected: `https://<prod-deployment>.convex.site` opens cold to the seeded demo project. Verify from a logged-out browser before submitting.
-8. **Repo visibility (human gate)** — suggested T-3 (2026-09-19): `gh repo edit Zen-cronic/change-order-desk --visibility public --accept-visibility-change-consequences`. Required at submission (*"All GitHub repos must be public to qualify."*).
-9. **Social posts (human gate)** — #1 build-in-public from the homeowner's seat (~Sep 12), #2 launch (Sep 21); tag @convex @OpenAI @firecrawl @agentmail (verify handles: Convex's own pages use @firecrawl_dev). Record links in `hackathon.md`.
-10. **Submission (human gate)** — https://vibeapps.dev/judging/convex-all-gas-hackathon-openai/submit before **2026-09-22 12:00 PM PT (15:00 EDT)**: public repo, live convex.site URL, video < 3 min, `hackathon.md` at root.
+1. **Convex account + project** — https://dashboard.convex.dev/signup. Run `npx convex login` → `npx convex dev` to connect a remote development deployment. Expected: `.env.local` gains `CONVEX_DEPLOYMENT` + `VITE_CONVEX_URL`.
+2. **OpenAI API Key** — Project key on https://platform.openai.com. Set: `npx convex env set OPENAI_API_KEY <key>` and `npx convex env set PROVIDER_MODE live`.
+3. **Google Places API Key** — Google Cloud Console (Places API New). Set: `npx convex env set GOOGLE_PLACES_API_KEY <key>`.
+4. **Firecrawl API Key** — https://www.firecrawl.dev. Set: `npx convex env set FIRECRAWL_API_KEY <key>`.
+5. **AgentMail API Key & Inbox** — https://console.agentmail.to. Set: `npx convex env set AGENTMAIL_API_KEY <key>`, `npx convex env set AGENTMAIL_INBOX_ID <inbox_id>`, `npx convex env set AGENTMAIL_WEBHOOK_SECRET <whsec>`.
+6. **Production deploy (human gate)** — `npm run deploy` (runs static-hosting build + `convex deploy`).
+7. **Repo visibility (human gate)** — `gh repo edit Zen-cronic/change-order-desk --visibility public --accept-visibility-change-consequences`.
+8. **Submission (human gate)** — https://vibeapps.dev/judging/convex-all-gas-hackathon-openai/submit before **2026-09-22 12:00 PM PT (15:00 EDT)**: public repo, live URL, demo video < 3 min, `hackathon.md` at root.
 
 Never paste keys into chat, commits or `hackathon.md`; `.env.local` is gitignored; `.env.example` is the tracked contract.
 
 ## Blockers
 
-- (none blocking mock mode)
+- None blocking local execution or fixture hero path (`PROVIDER_MODE=fixture` default).
 
 ## Ledger
 
 | # | Packet | Hypothesis | Verification | Result |
 |---|---|---|---|---|
 | 0 | hygiene | `.gitignore` before code | `git status` shows no secrets | accepted `38bb44b` |
-| 1 | scaffold | schema + approvals state machine + providers + docs compile and push locally | `npx convex dev --once` (6 components installed) · `npx tsc -b --noEmit` · `npx vitest run` (4 tests) · `npx vite build` · `npx convex run` smoke sequence (seed → sendAsHomeowner → sendForApproval → replyAs approve → status approved, 2 approvals, duplicate ignored) | accepted `b6237f7` |
+| 1 | scaffold (construction) | Change Order Desk initial scaffold | Local smoke test & typecheck | accepted `b6237f7` |
+| 2 | pivot naming & schema | Storefront Desk pivot: normalized 12+ table relational schema & naming screen | `docs/NAMING.md` created; `convex/schema.ts` compiled; obsolete construction files removed | accepted in working tree |
+| 3 | fixture vertical slice & UI | 4-sponsor hero loop: Places discovery, Firecrawl grounding, OpenAI structured outputs, rendered preview, AgentMail thread, proposal versioning, activity ledger, two-mode campaigns | `npx vitest run` (14 tests across unit and convex-test), `npm run typecheck`, `npm run build` | verified green |
+| 4 | safety & policy hardening | Immutable draft approvals, invalidation on edit, 2-followup ceiling, counteroffer requires human acceptance, suppression | `convex/backend.test.ts` (7 convex-test tests) passing | verified green |
 
 ## Next task
 
-Packet 2 (AgentMail live): provision one inbox per project via the component from an action; wire `Mail.send` to `agentmail.sendMessage`; verify a real inbound `message.received` webhook creates a draft; then in-thread reply. Requires the operator's AgentMail key + webhook secret (human gate 3). Until then: packet 5 (UI: design-direction pass, two-window demo) can proceed in mock mode.
+1. Split changes into atomic feature commits with `/commit-split`.
+2. Push to `main` of `https://github.com/Zen-cronic/change-order-desk`.
+3. Launch local app (`npm run dev:backend` and `npm run dev`) so operator can inspect progress live.

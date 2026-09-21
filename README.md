@@ -1,37 +1,72 @@
-# Change Order Desk
+# Storefront Desk (Provisional)
 
-**Every "can we also…?" on a renovation becomes a priced change order that the homeowner and the contractor both approve by replying to the email — and the live ledger is the record when someone later says "I never agreed to that."**
+**An agent-assisted customer-acquisition workspace for North American small and medium businesses whose online presence is missing, weak, stale, or hard to use.**
 
-Built for the [Convex All Gas Hackathon](https://www.convex.dev/hackathons/all-gas). Convex is the backend (database, functions, real-time sync, scheduled functions, file storage, components); the frontend is served from Convex static hosting on convex.site; AgentMail gives each project its own inbox; Firecrawl supplies reference prices from public supplier pages with provenance; OpenAI turns the request into line items. Nothing is sent, priced or approved by the model alone: application code decides, and a person replies.
+Find a real-looking local business (primary wedge: independent restaurants & cafés), assemble a cited business brief from official listing data and the open web, generate an interactive shareable website preview, and help the operator conduct a bounded email conversation that revises scope, price, timeline, and terms without surrendering commercial control to the model.
 
-## Why this exists
+Built for the [Convex All Gas Hackathon](https://www.convex.dev/hackathons/all-gas) (September 2026).
 
-Small renovators (1–10 people) run change orders over text and email, then argue about them at the final invoice. In Ontario the Consumer Protection Act caps the final price at 10% over the written estimate unless the change was approved in writing — so an unapproved extra is money the contractor cannot collect and a surprise the homeowner never agreed to. The tools that handle this (change-order modules in $500/month builder suites) require the homeowner to adopt a portal. Change Order Desk needs nothing from either party but the email thread they already have.
+---
 
-Unlike a permit tracker or a quote-comparison inbox, this is the ledger both sides sign by replying.
+## The Wedge: Independent Restaurants & Cafés
 
-## How the sponsors do real work
+Main Street merchants frequently lose high-margin sales and takeout orders because they lack a dedicated mobile-friendly digital storefront. Rather than cold-pitching generic web design or spamming business owners with bot emails, Storefront Desk enables an operator to:
+1. Identify high-potential SMBs with weak digital presence signals via Google Places.
+2. Ground business offerings in verified web citations via Firecrawl search & scrape.
+3. Automatically build a live, shareable, interactive digital storefront preview.
+4. Send an operator-approved custom pitch from an AgentMail inbox.
+5. Ingest replies, automatically classify intent, and create versioned, non-binding commercial proposals.
 
-| Sponsor | What it does on the hero path |
+---
+
+## How the 4 Sponsors Are Load-Bearing
+
+| Sponsor | Core Role in Storefront Desk |
 |---|---|
-| **Convex** | projects, parties, change orders, immutable revisions, approvals keyed by (revision, party), ledger — with live subscriptions so both parties see the same record change; scheduled reminders; file storage for attachments; official components registered in `convex/convex.config.ts` |
-| **AgentMail** | each project's inbox: the homeowner's request and the parties' approval replies arrive as signed `message.received` webhooks (idempotent on message id); the change order and the approved notice go out in-thread |
-| **Firecrawl** | `search` / `scrape` on public supplier and manufacturer pages for a *reference* unit price — shown with URL, fetched-at and expiry, labelled "reference, not quote"; the contractor's own rate card and emailed supplier quotes are the truth |
-| **OpenAI** | Responses API with structured outputs turns the email into line items, labour hours and the questions the contractor must confirm; drafts the plain-language change-order email |
+| **Convex** | Real-time reactive backend, normalized relational schema (12+ indexed tables), server-side authorization, scheduled follow-up orchestration, immutable activity ledger, and official components (`@convex-dev/static-hosting`, `@convex-dev/rate-limiter`, `@convex-dev/agent`, `@agentmail/convex`, `@firecrawl/firecrawl-convex`). |
+| **OpenAI** | Structured outputs for cited business briefs, typed website specifications, personalized outreach emails, and structured reply/counteroffer classification via `@convex-dev/agent`. |
+| **Firecrawl** | Deep web search and scrape of public SMB pages to gather verified citations and flag unknown details with strict provenance. |
+| **AgentMail** | Operator-owned custom inbox provisioning, inbound webhook ingestion with Svix signature verification, idempotency deduplication, and threaded conversation tracking. |
 
-## Status
+---
 
-Scaffold. See [`hackathon.md`](hackathon.md) (the build log judges read), [`BUILD_CHECKPOINT.md`](BUILD_CHECKPOINT.md) (current state + operator actions) and [`docs/PLAN.md`](docs/PLAN.md).
+## Key Safety Invariants
 
-## Running locally
+- **Human Gates on Outreach:** The model never sends emails autonomously. First pitches always require human operator review.
+- **Approval Invalidation:** Any edit made to an approved email draft immediately invalidates the approval (`expired_due_to_edit`).
+- **Bounded Automated Follow-ups:** In `assisted_followups` mode, at most **two** non-binding follow-ups can be scheduled. A third is impossible at the schema level. Follow-ups automatically cancel upon reply, unsubscribe, bounce, or manual pause.
+- **No Autonomous Commercial Binding:** When a client replies with a counteroffer (e.g. asking for a lower price or new scope), the model creates a new proposal version with `isCommerciallyBinding: false` and `humanDecisionRequired: true`. Only an authorized human operator can accept or decline terms.
+
+---
+
+## Running Locally
 
 ```bash
+# 1. Install dependencies
 npm install
-npx convex dev            # provisions a dev deployment and generates convex/_generated
-npm run dev               # Vite on http://localhost:5173
+
+# 2. Start Convex backend dev server
+npm run dev:backend
+
+# 3. Start Vite frontend dev server (separate terminal)
+npm run dev
+# Opens at http://localhost:5173
 ```
 
-Provider mode defaults to `mock` (deterministic fixtures, clearly labelled in the UI). See `.env.example` for the deployment environment variables that switch each provider to live.
+By default, the application runs in **Fixture Mode** (`PROVIDER_MODE=fixture`), meaning all 4 sponsors operate deterministically offline without requiring live API keys.
+
+To run tests:
+```bash
+npm test          # Runs 14 vitest unit & backend integration tests
+npm run typecheck # Strict TypeScript checking
+npm run build     # Production client build
+```
+
+---
+
+## Demo Walkthrough
+
+See [`docs/DEMO.md`](docs/DEMO.md) for the complete 60–90 second judge click path, and [`docs/NAMING.md`](docs/NAMING.md) for naming screening and rationale.
 
 ## License
 
