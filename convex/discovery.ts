@@ -2,28 +2,10 @@ import { action, internalMutation, mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import { getPlacesProvider, getProviderMode } from "./lib/providers";
-import { candidateStatus } from "./schema";
 
 export const listCandidates = query({
   args: { campaignId: v.id("campaigns") },
-  returns: v.array(
-    v.object({
-      _id: v.id("placesCandidates"),
-      placeId: v.string(),
-      name: v.string(),
-      formattedAddress: v.string(),
-      phone: v.optional(v.string()),
-      websiteUrl: v.optional(v.string()),
-      rating: v.optional(v.number()),
-      userRatingsTotal: v.optional(v.number()),
-      priceLevel: v.optional(v.number()),
-      category: v.string(),
-      weakPresenceSignals: v.array(v.string()),
-      status: candidateStatus,
-      prospectId: v.optional(v.id("prospects")),
-      discoveredAt: v.number(),
-    })
-  ),
+  returns: v.array(v.any()),
   handler: async (ctx, { campaignId }) => {
     return await ctx.db
       .query("placesCandidates")
