@@ -34,9 +34,10 @@ Never paste keys into chat, commits or `hackathon.md`; `.env.local` is gitignore
 | 2 | pivot naming & schema | Storefront Desk pivot: normalized 12+ table relational schema & naming screen | `docs/NAMING.md` created; `convex/schema.ts` compiled; obsolete construction files removed | accepted in working tree |
 | 3 | fixture vertical slice & UI | 4-sponsor hero loop: Places discovery, Firecrawl grounding, OpenAI structured outputs, rendered preview, AgentMail thread, proposal versioning, activity ledger, two-mode campaigns | `npx vitest run` (14 tests across unit and convex-test), `npm run typecheck`, `npm run build` | verified green |
 | 4 | safety & policy hardening | Immutable draft approvals, invalidation on edit, 2-followup ceiling, counteroffer requires human acceptance, suppression | `convex/backend.test.ts` (7 convex-test tests) passing | verified green |
+| 5 | ui polish & seesaw motions | Mobbin patterns (Attio-style review pane, Framer-style device preview), Seesaw spring motions, tactile press states, realistic iPhone chassis, and collapsible provenance ledger | Playwright browser visual tests, 14 unit & convex-test tests, strict typecheck, and production Vite build | verified green |
 
 ## Next task
 
-1. Split changes into atomic feature commits with `/commit-split`.
-2. Push to `main` of `https://github.com/Zen-cronic/change-order-desk`.
-3. Launch local app (`npm run dev:backend` and `npm run dev`) so operator can inspect progress live.
+1. Commit changes to `design/ui-polish-seesaw-mobbin` branch.
+2. Push branch to `origin` and open a Pull Request against `main`.
+3. Provide clear summary of Firecrawl MCP credentials and setup.
