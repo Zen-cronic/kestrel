@@ -35,9 +35,10 @@ Never paste keys into chat, commits or `hackathon.md`; `.env.local` is gitignore
 | 3 | fixture vertical slice & UI | 4-sponsor hero loop: Places discovery, Firecrawl grounding, OpenAI structured outputs, rendered preview, AgentMail thread, proposal versioning, activity ledger, two-mode campaigns | `npx vitest run` (14 tests across unit and convex-test), `npm run typecheck`, `npm run build` | verified green |
 | 4 | safety & policy hardening | Immutable draft approvals, invalidation on edit, 2-followup ceiling, counteroffer requires human acceptance, suppression | `convex/backend.test.ts` (7 convex-test tests) passing | verified green |
 | 5 | ui polish & seesaw motions | Mobbin patterns (Attio-style review pane, Framer-style device preview), Seesaw spring motions, tactile press states, realistic iPhone chassis, and collapsible provenance ledger | Playwright browser visual tests, 14 unit & convex-test tests, strict typecheck, and production Vite build | verified green |
+| 6 | bespoke dark studio command center | Complete redesign from generic SaaS layout to Obsidian Dark Studio Command Center: top command bar with breadcrumbs & fixture status, persistent left Target Pipeline with Places discovery & presence risk badges, right Main Stage with segmented console tabs and single-row responsive tab bar, embedded Live Storefront Studio, and high-contrast tabular typography | Playwright visual screenshot verification, 14 automated tests passing, strict zero-error typecheck | verified green |
 
 ## Next task
 
 1. Commit changes to `design/ui-polish-seesaw-mobbin` branch.
-2. Push branch to `origin` and open a Pull Request against `main`.
-3. Provide clear summary of Firecrawl MCP credentials and setup.
+2. Push branch to `origin` and verify PR #1 on GitHub.
+3. Provide summary of Firecrawl MCP credentials and setup instructions.
