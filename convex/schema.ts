@@ -1,178 +1,484 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
-// Money is stored in integer cents (CAD by default). Percentages are stored as
-// basis points to avoid float drift in totals that two people will argue about.
+// Money is stored in integer cents (USD or CAD).
+// All models follow strict typed validators and indexed read paths.
 
-export const partyRole = v.union(
-  v.literal("contractor"),
-  v.literal("homeowner"),
-  v.literal("supplier"),
+export const workspaceMemberRole = v.union(
+  v.literal("owner"),
+  v.literal("operator"),
+  v.literal("viewer")
 );
 
-export const priceSource = v.object({
-  type: v.union(
-    v.literal("rate_card"), // contractor's own labour rate / stocked material price
-    v.literal("supplier_quote"), // a supplier's emailed quote (third party in the inbox)
-    v.literal("reference"), // public page via Firecrawl search/scrape — reference, not a quote
-    v.literal("demo_catalog"), // seeded demo prices, clearly labelled
-    v.literal("unpriced"), // flagged, never guessed
-  ),
-  url: v.optional(v.string()),
-  title: v.optional(v.string()),
-  fetchedAt: v.optional(v.number()),
-  expiresAt: v.optional(v.number()),
-  quoteMessageId: v.optional(v.string()),
-});
+export const campaignMode = v.union(
+  v.literal("manual"),
+  v.literal("assisted_followups")
+);
 
-export const lineItem = v.object({
-  kind: v.union(v.literal("material"), v.literal("labour"), v.literal("other")),
-  description: v.string(),
-  qty: v.number(),
-  unit: v.string(), // "each", "m", "h", "box", ...
-  unitPriceCents: v.union(v.number(), v.null()),
-  source: priceSource,
-  flagged: v.boolean(), // true when unpriced or ambiguous — shown amber, never silently guessed
-  note: v.optional(v.string()),
-});
+export const campaignStatus = v.union(
+  v.literal("active"),
+  v.literal("paused"),
+  v.literal("completed"),
+  v.literal("archived")
+);
 
-export const changeOrderStatus = v.union(
-  v.literal("draft"), // extracted, awaiting contractor review
-  v.literal("awaiting_approval"), // sent to both parties
-  v.literal("approved"), // both parties approved the current revision
+export const candidateStatus = v.union(
+  v.literal("found"),
+  v.literal("approved"),
+  v.literal("dismissed")
+);
+
+export const prospectApprovalStatus = v.union(
+  v.literal("pending_operator_approval"),
+  v.literal("approved"),
   v.literal("rejected"),
-  v.literal("superseded"), // a newer revision exists
+  v.literal("paused")
+);
+
+export const outreachStatus = v.union(
+  v.literal("idle"),
+  v.literal("drafted"),
+  v.literal("pending_approval"),
+  v.literal("sent"),
+  v.literal("replied"),
+  v.literal("negotiating"),
+  v.literal("accepted"),
+  v.literal("declined"),
+  v.literal("suppressed"),
+  v.literal("bounced")
+);
+
+export const documentProvider = v.union(
+  v.literal("google_places"),
+  v.literal("firecrawl_search"),
+  v.literal("firecrawl_scrape"),
+  v.literal("operator_input"),
+  v.literal("fixture")
+);
+
+export const claimConfidence = v.union(
+  v.literal("official"),
+  v.literal("high"),
+  v.literal("medium"),
+  v.literal("needs_confirmation")
+);
+
+export const claimStatus = v.union(
+  v.literal("verified"),
+  v.literal("flagged_unknown"),
+  v.literal("unsupported")
+);
+
+export const draftApprovalStatus = v.union(
+  v.literal("draft"),
+  v.literal("pending_approval"),
+  v.literal("approved"),
+  v.literal("rejected"),
+  v.literal("expired_due_to_edit")
+);
+
+export const proposalStatus = v.union(
+  v.literal("draft"),
+  v.literal("proposed_by_operator"),
+  v.literal("counter_proposed_by_client"),
+  v.literal("accepted"),
+  v.literal("declined"),
+  v.literal("superseded")
+);
+
+export const replyClassification = v.union(
+  v.literal("reply_received"),
+  v.literal("interested"),
+  v.literal("question"),
+  v.literal("requested_site_change"),
+  v.literal("requested_scope_change"),
+  v.literal("requested_price_change"),
+  v.literal("requested_timeline_change"),
+  v.literal("requested_terms_change"),
+  v.literal("decline"),
+  v.literal("unsubscribe"),
+  v.literal("out_of_office"),
+  v.literal("ambiguous")
 );
 
 export default defineSchema({
-  projects: defineTable({
+  workspaces: defineTable({
     name: v.string(),
-    address: v.string(),
-    inboxId: v.optional(v.string()), // AgentMail inbox address for this project
-    currency: v.string(),
-    estimateTotalCents: v.number(), // the written estimate the 10% line is measured against
-    rateCard: v.object({
-      labourRateCentsPerHour: v.number(),
-      overheadProfitBps: v.number(), // OH&P shown as its own line
-      wasteFactorBps: v.number(),
-      taxBps: v.number(),
-      stockedMaterials: v.array(
-        v.object({ key: v.string(), description: v.string(), unit: v.string(), unitPriceCents: v.number() }),
-      ),
-    }),
+    slug: v.string(),
+    ownerId: v.string(),
+    defaultCurrency: v.string(),
     isDemo: v.boolean(),
-    demoAutoApproveRole: v.optional(partyRole), // demo contractor auto-approves after a delay
     createdAt: v.number(),
-  }).index("by_inbox", ["inboxId"]),
-
-  parties: defineTable({
-    projectId: v.id("projects"),
-    role: partyRole,
-    name: v.string(),
-    email: v.string(),
-    approvalToken: v.string(), // per-party token that must appear in an approval reply
-    userId: v.optional(v.string()),
   })
-    .index("by_project", ["projectId"])
-    .index("by_project_email", ["projectId", "email"])
-    .index("by_email", ["email"]),
+    .index("by_slug", ["slug"])
+    .index("by_ownerId", ["ownerId"]),
 
-  changeOrders: defineTable({
-    projectId: v.id("projects"),
-    number: v.number(),
-    title: v.string(),
-    status: changeOrderStatus,
-    currentRevisionId: v.optional(v.id("revisions")),
-    sourceMessageId: v.optional(v.string()),
-    requestedByPartyId: v.optional(v.id("parties")),
+  workspaceMembers: defineTable({
+    workspaceId: v.id("workspaces"),
+    tokenIdentifier: v.string(),
+    email: v.string(),
+    name: v.string(),
+    role: workspaceMemberRole,
+    createdAt: v.number(),
+  })
+    .index("by_workspaceId", ["workspaceId"])
+    .index("by_workspaceId_and_tokenIdentifier", ["workspaceId", "tokenIdentifier"])
+    .index("by_tokenIdentifier", ["tokenIdentifier"]),
+
+  campaigns: defineTable({
+    workspaceId: v.id("workspaces"),
+    name: v.string(),
+    category: v.string(),
+    location: v.string(),
+    mode: campaignMode,
+    status: campaignStatus,
+    maxFollowups: v.number(), // Strict ceiling of 2
+    followupDelayDays: v.number(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_workspaceId", ["workspaceId"]),
+
+  discoverySearches: defineTable({
+    workspaceId: v.id("workspaces"),
+    campaignId: v.id("campaigns"),
+    query: v.string(),
+    location: v.string(),
+    provider: v.union(v.literal("google_places"), v.literal("fixture")),
+    status: v.union(v.literal("pending"), v.literal("completed"), v.literal("failed")),
+    resultCount: v.number(),
+    error: v.optional(v.string()),
+    searchedAt: v.number(),
+  })
+    .index("by_campaignId", ["campaignId"])
+    .index("by_workspaceId", ["workspaceId"]),
+
+  placesCandidates: defineTable({
+    workspaceId: v.id("workspaces"),
+    campaignId: v.id("campaigns"),
+    searchId: v.optional(v.id("discoverySearches")),
+    placeId: v.string(),
+    name: v.string(),
+    formattedAddress: v.string(),
+    phone: v.optional(v.string()),
+    websiteUrl: v.optional(v.string()),
+    rating: v.optional(v.number()),
+    userRatingsTotal: v.optional(v.number()),
+    priceLevel: v.optional(v.number()),
+    businessStatus: v.optional(v.string()),
+    category: v.string(),
+    weakPresenceSignals: v.array(v.string()),
+    status: candidateStatus,
+    prospectId: v.optional(v.id("prospects")),
+    discoveredAt: v.number(),
+  })
+    .index("by_campaignId", ["campaignId"])
+    .index("by_placeId", ["placeId"])
+    .index("by_campaignId_and_status", ["campaignId", "status"]),
+
+  prospects: defineTable({
+    workspaceId: v.id("workspaces"),
+    campaignId: v.id("campaigns"),
+    candidateId: v.optional(v.id("placesCandidates")),
+    name: v.string(),
+    vertical: v.string(),
+    address: v.string(),
+    phone: v.optional(v.string()),
+    targetEmail: v.string(),
+    contactName: v.optional(v.string()),
+    approvalStatus: prospectApprovalStatus,
+    outreachStatus: outreachStatus,
+    currentBriefId: v.optional(v.id("businessBriefs")),
+    currentWebsiteSpecId: v.optional(v.id("websiteSpecs")),
+    currentDraftId: v.optional(v.id("outreachDrafts")),
+    currentProposalId: v.optional(v.id("proposals")),
+    activeThreadId: v.optional(v.string()),
+    followupCount: v.number(),
+    isSuppressed: v.boolean(),
+    suppressionReason: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
-    .index("by_project", ["projectId"])
-    .index("by_project_number", ["projectId", "number"]),
+    .index("by_workspaceId", ["workspaceId"])
+    .index("by_campaignId", ["campaignId"])
+    .index("by_workspaceId_and_approvalStatus", ["workspaceId", "approvalStatus"])
+    .index("by_targetEmail", ["targetEmail"]),
 
-  revisions: defineTable({
-    changeOrderId: v.id("changeOrders"),
-    projectId: v.id("projects"),
-    version: v.number(),
-    lineItems: v.array(lineItem),
-    overheadProfitBps: v.number(),
-    wasteFactorBps: v.number(),
-    taxBps: v.number(),
-    subtotalCents: v.number(),
-    overheadProfitCents: v.number(),
-    taxCents: v.number(),
-    totalCents: v.number(),
-    scheduleImpactDays: v.number(),
-    summary: v.string(), // plain-language description sent to both parties
-    createdByPartyId: v.optional(v.id("parties")),
-    createdAt: v.number(),
-  })
-    .index("by_change_order", ["changeOrderId"])
-    .index("by_change_order_version", ["changeOrderId", "version"]),
-
-  approvals: defineTable({
-    projectId: v.id("projects"),
-    changeOrderId: v.id("changeOrders"),
-    revisionId: v.id("revisions"),
-    partyId: v.id("parties"),
-    decision: v.union(v.literal("approve"), v.literal("reject")),
-    via: v.union(v.literal("email"), v.literal("app"), v.literal("demo")),
-    messageId: v.optional(v.string()),
-    at: v.number(),
-  })
-    .index("by_revision_party", ["revisionId", "partyId"])
-    .index("by_change_order", ["changeOrderId"]),
-
-  ledger: defineTable({
-    projectId: v.id("projects"),
-    changeOrderId: v.optional(v.id("changeOrders")),
-    revisionId: v.optional(v.id("revisions")),
-    kind: v.string(), // "request_received" | "draft_created" | "sent_for_approval" | "approval_recorded" | ...
-    summary: v.string(),
-    actorPartyId: v.optional(v.id("parties")),
-    at: v.number(),
-  }).index("by_project_at", ["projectId", "at"]),
-
-  inboundMessages: defineTable({
-    projectId: v.optional(v.id("projects")),
-    inboxId: v.string(),
-    messageId: v.string(), // provider message id — idempotency key
-    threadId: v.optional(v.string()),
-    from: v.string(),
-    subject: v.string(),
-    text: v.string(), // reply text with quoted history stripped
-    receivedAt: v.number(),
-    via: v.union(v.literal("agentmail"), v.literal("demo")),
-    classification: v.optional(
-      v.union(v.literal("request"), v.literal("approval"), v.literal("rejection"), v.literal("quote"), v.literal("other")),
-    ),
-    processedAt: v.optional(v.number()),
-    error: v.optional(v.string()),
-    attachments: v.array(v.object({ storageId: v.optional(v.id("_storage")), filename: v.string(), contentType: v.string() })),
-  })
-    .index("by_message_id", ["messageId"])
-    .index("by_project", ["projectId"]),
-
-  referencePrices: defineTable({
-    key: v.string(), // normalized item key, e.g. "gfci outlet 20a"
-    description: v.string(),
-    unit: v.string(),
-    unitPriceCents: v.number(),
+  sourceDocuments: defineTable({
+    workspaceId: v.id("workspaces"),
+    prospectId: v.id("prospects"),
     url: v.string(),
     title: v.string(),
-    provider: v.union(v.literal("firecrawl_search"), v.literal("firecrawl_scrape"), v.literal("demo_catalog")),
-    fetchedAt: v.number(),
-    expiresAt: v.number(),
-  }).index("by_key", ["key"]),
+    provider: documentProvider,
+    status: v.union(v.literal("valid"), v.literal("failed"), v.literal("robots_prevented")),
+    httpStatus: v.optional(v.number()),
+    retrievedAt: v.number(),
+    rawTextSnippet: v.optional(v.string()),
+  }).index("by_prospectId", ["prospectId"]),
 
-  supplierQuotes: defineTable({
-    projectId: v.id("projects"),
-    partyId: v.id("parties"),
-    messageId: v.string(),
-    items: v.array(
-      v.object({ key: v.string(), description: v.string(), unit: v.string(), unitPriceCents: v.number(), leadTimeDays: v.optional(v.number()) }),
+  evidenceClaims: defineTable({
+    workspaceId: v.id("workspaces"),
+    prospectId: v.id("prospects"),
+    sourceDocumentId: v.id("sourceDocuments"),
+    claimKey: v.string(),
+    category: v.union(
+      v.literal("identity"),
+      v.literal("hours"),
+      v.literal("menu"),
+      v.literal("services"),
+      v.literal("location"),
+      v.literal("weakness"),
+      v.literal("reputation")
     ),
-    receivedAt: v.number(),
-  }).index("by_project", ["projectId"]),
+    statement: v.string(),
+    rawExcerpt: v.string(),
+    confidence: claimConfidence,
+    status: claimStatus,
+    recordedAt: v.number(),
+  })
+    .index("by_prospectId", ["prospectId"])
+    .index("by_prospectId_and_category", ["prospectId", "category"]),
+
+  businessBriefs: defineTable({
+    workspaceId: v.id("workspaces"),
+    prospectId: v.id("prospects"),
+    version: v.number(),
+    headline: v.string(),
+    summary: v.string(),
+    citedEvidenceIds: v.array(v.id("evidenceClaims")),
+    onlinePresenceDiagnosis: v.object({
+      missingWebsite: v.boolean(),
+      staleContent: v.boolean(),
+      mobileIssues: v.boolean(),
+      missingMenuPdf: v.boolean(),
+      opportunities: v.array(v.string()),
+    }),
+    strengths: v.array(
+      v.object({
+        title: v.string(),
+        evidenceId: v.optional(v.id("evidenceClaims")),
+      })
+    ),
+    unknowns: v.array(v.string()),
+    operatorNotes: v.optional(v.string()),
+    createdAt: v.number(),
+  })
+    .index("by_prospectId", ["prospectId"])
+    .index("by_prospectId_and_version", ["prospectId", "version"]),
+
+  websiteSpecs: defineTable({
+    workspaceId: v.id("workspaces"),
+    prospectId: v.id("prospects"),
+    version: v.number(),
+    slug: v.string(),
+    businessIdentity: v.object({
+      name: v.string(),
+      tagline: v.string(),
+      vertical: v.string(),
+      neighborhood: v.string(),
+      city: v.string(),
+    }),
+    theme: v.object({
+      primaryColor: v.string(),
+      accentColor: v.string(),
+      fontHeading: v.string(),
+      fontBody: v.string(),
+      styleVariant: v.string(),
+    }),
+    navigation: v.array(v.object({ label: v.string(), anchor: v.string() })),
+    hero: v.object({
+      badge: v.string(),
+      headline: v.string(),
+      subheadline: v.string(),
+      primaryCta: v.object({ label: v.string(), action: v.string() }),
+      secondaryCta: v.optional(v.object({ label: v.string(), action: v.string() })),
+      evidenceIds: v.array(v.id("evidenceClaims")),
+    }),
+    aboutSection: v.object({
+      title: v.string(),
+      storyParagraphs: v.array(v.string()),
+      highlights: v.array(v.string()),
+      evidenceIds: v.array(v.id("evidenceClaims")),
+    }),
+    offeringsSection: v.object({
+      title: v.string(),
+      description: v.string(),
+      items: v.array(
+        v.object({
+          name: v.string(),
+          description: v.string(),
+          priceDisplay: v.optional(v.string()),
+          badge: v.optional(v.string()),
+          evidenceId: v.optional(v.id("evidenceClaims")),
+        })
+      ),
+      evidenceIds: v.array(v.id("evidenceClaims")),
+    }),
+    hoursAndLocation: v.object({
+      address: v.string(),
+      hours: v.array(
+        v.object({
+          days: v.string(),
+          open: v.string(),
+          close: v.string(),
+        })
+      ),
+      note: v.optional(v.string()),
+      evidenceIds: v.array(v.id("evidenceClaims")),
+    }),
+    contactSection: v.object({
+      email: v.string(),
+      phone: v.optional(v.string()),
+      reservationNotice: v.string(),
+      evidenceIds: v.array(v.id("evidenceClaims")),
+    }),
+    unknownItems: v.array(v.string()),
+    isPublished: v.boolean(),
+    publishedAt: v.optional(v.number()),
+    createdAt: v.number(),
+  })
+    .index("by_prospectId", ["prospectId"])
+    .index("by_slug", ["slug"])
+    .index("by_prospectId_and_version", ["prospectId", "version"]),
+
+  outreachDrafts: defineTable({
+    workspaceId: v.id("workspaces"),
+    prospectId: v.id("prospects"),
+    version: v.number(),
+    recipientEmail: v.string(),
+    subject: v.string(),
+    bodyHtml: v.string(),
+    bodyText: v.string(),
+    shareUrl: v.string(),
+    proposedScope: v.array(v.string()),
+    proposedPriceCents: v.number(),
+    proposedTimelineDays: v.number(),
+    currency: v.string(),
+    approvalStatus: draftApprovalStatus,
+    approvedBy: v.optional(v.string()),
+    approvedAt: v.optional(v.number()),
+    sentAt: v.optional(v.number()),
+    agentmailMessageId: v.optional(v.string()),
+    sendError: v.optional(v.string()),
+    hashOfContent: v.string(),
+    createdAt: v.number(),
+  })
+    .index("by_prospectId", ["prospectId"])
+    .index("by_prospectId_and_version", ["prospectId", "version"])
+    .index("by_workspaceId_and_approvalStatus", ["workspaceId", "approvalStatus"]),
+
+  proposals: defineTable({
+    workspaceId: v.id("workspaces"),
+    prospectId: v.id("prospects"),
+    version: v.number(),
+    scopeItems: v.array(v.string()),
+    priceCents: v.number(),
+    timelineDays: v.number(),
+    currency: v.string(),
+    termsSummary: v.string(),
+    status: proposalStatus,
+    isCommerciallyBinding: v.boolean(),
+    humanDecisionRequired: v.boolean(),
+    decidedBy: v.optional(v.string()),
+    decidedAt: v.optional(v.number()),
+    changeReason: v.optional(v.string()),
+    sourceMessageId: v.optional(v.string()),
+    createdAt: v.number(),
+  })
+    .index("by_prospectId", ["prospectId"])
+    .index("by_prospectId_and_version", ["prospectId", "version"]),
+
+  agentMailThreads: defineTable({
+    workspaceId: v.id("workspaces"),
+    prospectId: v.id("prospects"),
+    threadId: v.string(),
+    inboxId: v.string(),
+    subject: v.string(),
+    lastMessageAt: v.number(),
+    messageCount: v.number(),
+    status: v.union(
+      v.literal("active"),
+      v.literal("paused"),
+      v.literal("bounced"),
+      v.literal("suppressed"),
+      v.literal("closed")
+    ),
+    createdAt: v.number(),
+  })
+    .index("by_threadId", ["threadId"])
+    .index("by_prospectId", ["prospectId"]),
+
+  agentMailMessages: defineTable({
+    workspaceId: v.id("workspaces"),
+    prospectId: v.id("prospects"),
+    threadId: v.string(),
+    messageId: v.string(),
+    direction: v.union(v.literal("outbound"), v.literal("inbound")),
+    from: v.string(),
+    to: v.array(v.string()),
+    subject: v.string(),
+    text: v.string(),
+    html: v.optional(v.string()),
+    classification: v.optional(replyClassification),
+    proposedChanges: v.optional(
+      v.object({
+        requestedScope: v.optional(v.array(v.string())),
+        requestedPriceCents: v.optional(v.number()),
+        requestedTimelineDays: v.optional(v.number()),
+        notes: v.string(),
+      })
+    ),
+    via: v.union(v.literal("agentmail"), v.literal("fixture")),
+    receivedOrSentAt: v.number(),
+    processedAt: v.optional(v.number()),
+  })
+    .index("by_messageId", ["messageId"])
+    .index("by_prospectId", ["prospectId"])
+    .index("by_threadId", ["threadId"]),
+
+  followupSchedules: defineTable({
+    workspaceId: v.id("workspaces"),
+    prospectId: v.id("prospects"),
+    campaignId: v.id("campaigns"),
+    attemptNumber: v.number(), // Ceiling of 2
+    scheduledTime: v.number(),
+    status: v.union(
+      v.literal("pending"),
+      v.literal("cancelled"),
+      v.literal("sent"),
+      v.literal("skipped")
+    ),
+    cancellationReason: v.optional(v.string()),
+    scheduledFunctionId: v.optional(v.string()),
+    createdAt: v.number(),
+    executedAt: v.optional(v.number()),
+  })
+    .index("by_prospectId", ["prospectId"])
+    .index("by_status", ["status"]),
+
+  activityLedger: defineTable({
+    workspaceId: v.id("workspaces"),
+    prospectId: v.optional(v.id("prospects")),
+    campaignId: v.optional(v.id("campaigns")),
+    actor: v.string(),
+    kind: v.string(),
+    summary: v.string(),
+    details: v.optional(v.string()),
+    at: v.number(),
+  })
+    .index("by_workspaceId_and_at", ["workspaceId", "at"])
+    .index("by_prospectId_and_at", ["prospectId", "at"]),
+
+  suppressions: defineTable({
+    workspaceId: v.id("workspaces"),
+    email: v.string(),
+    reason: v.union(
+      v.literal("unsubscribe"),
+      v.literal("bounce"),
+      v.literal("manual_operator"),
+      v.literal("decline")
+    ),
+    suppressedAt: v.number(),
+  })
+    .index("by_workspaceId_and_email", ["workspaceId", "email"])
+    .index("by_email", ["email"]),
 });

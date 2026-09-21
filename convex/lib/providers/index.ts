@@ -1,23 +1,67 @@
-import { mockCrawl, mockLlm, mockMail } from "./mock";
-import { liveLlm } from "./live";
-import { providerMode } from "./types";
-import type { Crawl, Llm, Mail } from "./types";
+import {
+  PlacesProvider,
+  FirecrawlProvider,
+  OpenAIProvider,
+  AgentMailProvider,
+  getProviderMode,
+} from "./types";
+import {
+  FixturePlacesProvider,
+  FixtureFirecrawlProvider,
+  FixtureOpenAIProvider,
+  FixtureAgentMailProvider,
+} from "./fixture";
+import {
+  LivePlacesProvider,
+  LiveFirecrawlProvider,
+  LiveOpenAIProvider,
+  LiveAgentMailProvider,
+} from "./live";
 
-// Selection is per provider so partial credentials still work; the UI shows
-// which providers are live so nobody mistakes a fixture for the real thing.
-export function getLlm(): Llm {
-  return providerMode() === "live" && process.env.OPENAI_API_KEY ? liveLlm : mockLlm;
+export * from "./types";
+export * from "./fixture";
+
+let placesProviderInstance: PlacesProvider | null = null;
+let firecrawlProviderInstance: FirecrawlProvider | null = null;
+let openAiProviderInstance: OpenAIProvider | null = null;
+let agentMailProviderInstance: AgentMailProvider | null = null;
+
+export function getPlacesProvider(): PlacesProvider {
+  if (!placesProviderInstance) {
+    placesProviderInstance =
+      getProviderMode() === "live" && process.env.GOOGLE_PLACES_API_KEY
+        ? new LivePlacesProvider()
+        : new FixturePlacesProvider();
+  }
+  return placesProviderInstance;
 }
-export function getCrawl(): Crawl {
-  return mockCrawl; // live Firecrawl (component from an action) lands in the crawl packet
+
+export function getFirecrawlProvider(): FirecrawlProvider {
+  if (!firecrawlProviderInstance) {
+    firecrawlProviderInstance =
+      getProviderMode() === "live" && process.env.FIRECRAWL_API_KEY
+        ? new LiveFirecrawlProvider()
+        : new FixtureFirecrawlProvider();
+  }
+  return firecrawlProviderInstance;
 }
-export function getMail(): Mail {
-  return mockMail; // live AgentMail (component sendMessage) lands in the mail packet
+
+export function getOpenAIProvider(): OpenAIProvider {
+  if (!openAiProviderInstance) {
+    openAiProviderInstance =
+      getProviderMode() === "live" && process.env.OPENAI_API_KEY
+        ? new LiveOpenAIProvider()
+        : new FixtureOpenAIProvider();
+  }
+  return openAiProviderInstance;
 }
-export function activeProviders() {
-  return {
-    llm: providerMode() === "live" && process.env.OPENAI_API_KEY ? "openai" : "mock",
-    crawl: "mock",
-    mail: "mock",
-  } as const;
+
+export function getAgentMailProvider(): AgentMailProvider {
+  if (!agentMailProviderInstance) {
+    agentMailProviderInstance =
+      getProviderMode() === "live" && process.env.AGENTMAIL_API_KEY && process.env.AGENTMAIL_INBOX_ID
+        ? new LiveAgentMailProvider()
+        : new FixtureAgentMailProvider();
+  }
+  return agentMailProviderInstance;
 }

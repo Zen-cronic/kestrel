@@ -1,71 +1,337 @@
-import type { ExtractedRequest, Llm } from "./types";
+import {
+  PlacesProvider,
+  FirecrawlProvider,
+  OpenAIProvider,
+  AgentMailProvider,
+  PlaceCandidateData,
+  ScrapedSourceData,
+  GeneratedBriefOutput,
+  GeneratedWebsiteSpecOutput,
+  GeneratedOutreachOutput,
+  ReplyClassificationOutput,
+} from "./types";
+import OpenAI from "openai";
 
-// OpenAI Responses API with a JSON schema (structured outputs). The model
-// proposes line items; application code prices them and decides what is sent.
-const MODEL = () => process.env.OPENAI_MODEL ?? "gpt-5.6-terra";
+export class LivePlacesProvider implements PlacesProvider {
+  private apiKey: string;
+  constructor(apiKey?: string) {
+    this.apiKey = apiKey || process.env.GOOGLE_PLACES_API_KEY || "";
+    if (!this.apiKey) {
+      throw new Error("GOOGLE_PLACES_API_KEY is required for live Places queries.");
+    }
+  }
 
-async function responses(input: string, schema: Record<string, unknown>, name: string): Promise<unknown> {
-  const res = await fetch("https://api.openai.com/v1/responses", {
-    method: "POST",
-    headers: { "content-type": "application/json", authorization: `Bearer ${process.env.OPENAI_API_KEY}` },
-    body: JSON.stringify({
-      model: MODEL(),
-      input,
-      text: { format: { type: "json_schema", name, strict: true, schema } },
-    }),
-  });
-  if (!res.ok) throw new Error(`OpenAI ${res.status}: ${(await res.text()).slice(0, 300)}`);
-  const data = (await res.json()) as { output_text?: string; output?: Array<{ content?: Array<{ text?: string }> }> };
-  const text = data.output_text ?? data.output?.flatMap((o) => o.content ?? []).map((c) => c.text ?? "").join("") ?? "";
-  return JSON.parse(text);
+  async search(query: string, location: string): Promise<PlaceCandidateData[]> {
+    const fullQuery = `${query} in ${location}`;
+    const url = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(fullQuery)}&key=${this.apiKey}`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`Google Places search failed: ${res.statusText}`);
+    const data = (await res.json()) as {
+      results?: Array<{
+        place_id: string;
+        name: string;
+        formatted_address: string;
+        rating?: number;
+        user_ratings_total?: number;
+        price_level?: number;
+        business_status?: string;
+        types?: string[];
+      }>;
+    };
+
+    const candidates: PlaceCandidateData[] = [];
+    for (const item of (data.results || []).slice(0, 5)) {
+      const details = await this.getDetails(item.place_id).catch(() => null);
+      candidates.push(
+        details || {
+          placeId: item.place_id,
+          name: item.name,
+          formattedAddress: item.formatted_address,
+          rating: item.rating,
+          userRatingsTotal: item.user_ratings_total,
+          priceLevel: item.price_level,
+          category: query,
+          businessStatus: item.business_status,
+          weakPresenceSignals: ["Audit pending for live Places result"],
+        }
+      );
+    }
+    return candidates;
+  }
+
+  async getDetails(placeId: string): Promise<PlaceCandidateData | null> {
+    const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${encodeURIComponent(placeId)}&fields=name,formatted_address,formatted_phone_number,website,rating,user_ratings_total,price_level,business_status,types&key=${this.apiKey}`;
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const data = (await res.json()) as {
+      result?: {
+        name: string;
+        formatted_address: string;
+        formatted_phone_number?: string;
+        website?: string;
+        rating?: number;
+        user_ratings_total?: number;
+        price_level?: number;
+        business_status?: string;
+        types?: string[];
+      };
+    };
+    if (!data.result) return null;
+    const r = data.result;
+    const signals: string[] = [];
+    if (!r.website) {
+      signals.push("No website listed on official Google Business listing");
+    } else if (r.website.includes("facebook.com") || r.website.includes("instagram.com")) {
+      signals.push("Listing points to social media profile rather than owned domain");
+    }
+
+    return {
+      placeId,
+      name: r.name,
+      formattedAddress: r.formatted_address,
+      phone: r.formatted_phone_number,
+      websiteUrl: r.website,
+      rating: r.rating,
+      userRatingsTotal: r.user_ratings_total,
+      priceLevel: r.price_level,
+      category: r.types?.[0] || "local business",
+      businessStatus: r.business_status,
+      weakPresenceSignals: signals.length > 0 ? signals : ["Standard web presence audit recommended"],
+    };
+  }
 }
 
-const requestSchema = {
-  type: "object",
-  additionalProperties: false,
-  properties: {
-    title: { type: "string" },
-    summary: { type: "string" },
-    scheduleImpactDays: { type: "number" },
-    questions: { type: "array", items: { type: "string" } },
-    lines: {
-      type: "array",
-      items: {
-        type: "object",
-        additionalProperties: false,
-        properties: {
-          kind: { type: "string", enum: ["material", "labour", "other"] },
-          description: { type: "string" },
-          qty: { type: "number" },
-          unit: { type: "string" },
-          labourHours: { type: "number" },
-          ambiguous: { type: "boolean" },
-          note: { type: "string" },
-        },
-        required: ["kind", "description", "qty", "unit", "labourHours", "ambiguous", "note"],
-      },
-    },
-  },
-  required: ["title", "summary", "scheduleImpactDays", "questions", "lines"],
-};
+export class LiveFirecrawlProvider implements FirecrawlProvider {
+  private apiKey: string;
+  constructor(apiKey?: string) {
+    this.apiKey = apiKey || process.env.FIRECRAWL_API_KEY || "";
+    if (!this.apiKey) {
+      throw new Error("FIRECRAWL_API_KEY is required for live web audits.");
+    }
+  }
 
-export const liveLlm: Llm = {
-  async extractChangeRequest({ text, projectContext }) {
-    const prompt = `You turn a homeowner's or contractor's email about a residential renovation into change-order line items.\nRules: never invent quantities you cannot infer — mark the line ambiguous instead; labour is a separate line in hours; do not price anything; list the questions a contractor must confirm before pricing.\nProject context: ${projectContext}\n\nEmail:\n${text}`;
-    return (await responses(prompt, requestSchema, "change_request")) as ExtractedRequest;
-  },
-  async draftChangeOrderEmail({ summary, totalsText, approveInstructions }) {
-    const schema = { type: "object", additionalProperties: false, properties: { body: { type: "string" } }, required: ["body"] };
-    const out = (await responses(
-      `Write a short, plain-language change-order email (no marketing tone, no legal claims). Include exactly these facts, then the approval instructions verbatim.\nSummary: ${summary}\nTotals: ${totalsText}\nApproval instructions: ${approveInstructions}`,
-      schema,
-      "co_email",
-    )) as { body: string };
-    return out.body;
-  },
-  async classifyInbound({ subject, text }) {
-    const schema = { type: "object", additionalProperties: false, properties: { kind: { type: "string", enum: ["request", "quote", "other"] } }, required: ["kind"] };
-    const out = (await responses(`Classify this email for a renovation project inbox as request (a scope change), quote (a supplier price quote) or other.\nSubject: ${subject}\n\n${text}`, schema, "inbound_kind")) as { kind: "request" | "quote" | "other" };
-    return out.kind;
-  },
-};
+  async auditBusiness(businessName: string, domainOrQuery: string, location: string): Promise<ScrapedSourceData[]> {
+    const query = domainOrQuery.startsWith("http") ? domainOrQuery : `${businessName} ${location}`;
+    const url = "https://api.firecrawl.dev/v1/search";
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${this.apiKey}`,
+      },
+      body: JSON.stringify({
+        query,
+        limit: 3,
+        scrapeOptions: { formats: ["markdown"] },
+      }),
+    });
+
+    if (!res.ok) {
+      throw new Error(`Firecrawl search failed with status ${res.status}: ${res.statusText}`);
+    }
+    const data = (await res.json()) as {
+      data?: Array<{
+        url?: string;
+        title?: string;
+        markdown?: string;
+      }>;
+    };
+
+    const sources: ScrapedSourceData[] = [];
+    for (const item of data.data || []) {
+      const pageUrl = item.url || "https://openweb.example.com";
+      const title = item.title || `${businessName} Public Web Page`;
+      const snippet = (item.markdown || "").slice(0, 500);
+
+      sources.push({
+        url: pageUrl,
+        title,
+        provider: "firecrawl_search",
+        httpStatus: 200,
+        contentSnippet: snippet,
+        claims: [
+          {
+            claimKey: "public_record_" + Math.random().toString(36).slice(2, 8),
+            category: "identity",
+            statement: `Public listing found for ${businessName}: ${title}`,
+            rawExcerpt: snippet.slice(0, 150),
+            confidence: "medium",
+            status: "verified",
+          },
+        ],
+      });
+    }
+
+    return sources;
+  }
+}
+
+export class LiveOpenAIProvider implements OpenAIProvider {
+  private client: OpenAI;
+  private model: string;
+
+  constructor(apiKey?: string, model?: string) {
+    const key = apiKey || process.env.OPENAI_API_KEY;
+    if (!key) {
+      throw new Error("OPENAI_API_KEY is required for live AI generation.");
+    }
+    this.client = new OpenAI({ apiKey: key });
+    this.model = model || process.env.OPENAI_MODEL || "gpt-4o-mini";
+  }
+
+  async generateBusinessBrief(input: {
+    businessName: string;
+    address: string;
+    category: string;
+    evidence: Array<{ claimKey: string; statement: string; category: string }>;
+  }): Promise<GeneratedBriefOutput> {
+    const prompt = `You are an expert SMB digital growth analyst. Based on this verified evidence:
+Business: ${input.businessName} (${input.category})
+Address: ${input.address}
+Evidence claims:
+${JSON.stringify(input.evidence, null, 2)}
+
+Produce a grounded, factual brief. Do not invent facts, hours, awards, or services not in the evidence.`;
+
+    const response = await this.client.chat.completions.create({
+      model: this.model,
+      messages: [
+        { role: "system", content: "You output strictly valid JSON matching the requested schema." },
+        { role: "user", content: prompt },
+      ],
+      response_format: { type: "json_object" },
+    });
+
+    const content = response.choices[0]?.message?.content || "{}";
+    const parsed = JSON.parse(content);
+    return {
+      headline: parsed.headline || `${input.businessName} Growth Opportunity`,
+      summary: parsed.summary || "Summary generated from verified evidence.",
+      diagnosis: parsed.diagnosis || {
+        missingWebsite: true,
+        staleContent: false,
+        mobileIssues: true,
+        missingMenuPdf: true,
+        opportunities: ["Modern responsive storefront", "Direct order capture"],
+      },
+      strengths: parsed.strengths || [],
+      unknowns: parsed.unknowns || ["Catering availability unconfirmed"],
+      operatorNotes: parsed.operatorNotes,
+    };
+  }
+
+  async generateWebsiteSpec(input: {
+    businessName: string;
+    brief: GeneratedBriefOutput;
+    evidence: Array<{ claimKey: string; statement: string; category: string }>;
+  }): Promise<GeneratedWebsiteSpecOutput> {
+    const prompt = `Generate a typed website specification for ${input.businessName} based on:
+Brief: ${JSON.stringify(input.brief, null, 2)}
+Evidence: ${JSON.stringify(input.evidence, null, 2)}
+
+Every factual claim in hero, about, offerings, and hours must cite existing evidence claimKey. Any unconfirmed details must go to unknownItems. Output strictly valid JSON.`;
+
+    const response = await this.client.chat.completions.create({
+      model: this.model,
+      messages: [
+        { role: "system", content: "Output strictly valid JSON conforming to website spec." },
+        { role: "user", content: prompt },
+      ],
+      response_format: { type: "json_object" },
+    });
+
+    return JSON.parse(response.choices[0]?.message?.content || "{}") as GeneratedWebsiteSpecOutput;
+  }
+
+  async generateOutreachDraft(input: {
+    businessName: string;
+    ownerName?: string;
+    brief: GeneratedBriefOutput;
+    shareUrl: string;
+  }): Promise<GeneratedOutreachOutput> {
+    const prompt = `Draft a concise, warm, professional cold email to ${input.businessName} offering a digital storefront. Include the live preview link ${input.shareUrl}. The proposed price is $1,250 CAD for a 7-day turnaround. Output JSON with subject, bodyText, bodyHtml, proposedScope, proposedPriceCents (125000), proposedTimelineDays (7).`;
+
+    const response = await this.client.chat.completions.create({
+      model: this.model,
+      messages: [
+        { role: "system", content: "Output strictly JSON." },
+        { role: "user", content: prompt },
+      ],
+      response_format: { type: "json_object" },
+    });
+
+    return JSON.parse(response.choices[0]?.message?.content || "{}") as GeneratedOutreachOutput;
+  }
+
+  async classifyReply(input: {
+    originalSubject: string;
+    originalBody: string;
+    replySubject: string;
+    replyText: string;
+  }): Promise<ReplyClassificationOutput> {
+    const prompt = `Classify this inbound email reply from a business owner:
+Subject: ${input.replySubject}
+Body: ${input.replyText}
+
+Output JSON with:
+- classification (reply_received, interested, question, requested_site_change, requested_scope_change, requested_price_change, requested_timeline_change, requested_terms_change, decline, unsubscribe, out_of_office, ambiguous)
+- confidenceScore (0 to 1)
+- proposedChanges (object with optional requestedScope, requestedPriceCents, requestedTimelineDays, notes)
+- reasoning (string)`;
+
+    const response = await this.client.chat.completions.create({
+      model: this.model,
+      messages: [
+        { role: "system", content: "Output strictly JSON." },
+        { role: "user", content: prompt },
+      ],
+      response_format: { type: "json_object" },
+    });
+
+    return JSON.parse(response.choices[0]?.message?.content || "{}") as ReplyClassificationOutput;
+  }
+}
+
+export class LiveAgentMailProvider implements AgentMailProvider {
+  private apiKey: string;
+  constructor(apiKey?: string) {
+    this.apiKey = apiKey || process.env.AGENTMAIL_API_KEY || "";
+    if (!this.apiKey) {
+      throw new Error("AGENTMAIL_API_KEY is required for live AgentMail sends.");
+    }
+  }
+
+  async sendMessage(input: {
+    inboxId: string;
+    to: string[];
+    subject: string;
+    text: string;
+    html?: string;
+    inReplyToMessageId?: string;
+  }): Promise<{ messageId: string; threadId: string }> {
+    const url = `https://api.agentmail.to/v1/inboxes/${encodeURIComponent(input.inboxId)}/messages`;
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${this.apiKey}`,
+      },
+      body: JSON.stringify({
+        to: input.to,
+        subject: input.subject,
+        text: input.text,
+        html: input.html,
+        in_reply_to: input.inReplyToMessageId,
+      }),
+    });
+
+    if (!res.ok) {
+      throw new Error(`AgentMail send failed with status ${res.status}: ${res.statusText}`);
+    }
+    const data = (await res.json()) as { message_id?: string; thread_id?: string };
+    return {
+      messageId: data.message_id || "msg_live_" + Date.now(),
+      threadId: data.thread_id || "thread_live_" + Date.now(),
+    };
+  }
+}
