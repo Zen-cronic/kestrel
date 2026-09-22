@@ -14,12 +14,11 @@ build/
 .playwright-mcp/
 playwright-report/
 test-results/
-# film artifacts (keep scripts tracked, ignore generated media)
-film/build/
-film/out/
-film/visuals/
-film/narration/
+# film directory, scripts, and video assets
+film/
 *.mp4
+critique_*.png
+storefront_studio_*.png
 
 .agents
 .claude
