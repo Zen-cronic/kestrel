@@ -15,6 +15,7 @@ import type * as discovery from "../discovery.js";
 import type * as evidence from "../evidence.js";
 import type * as followups from "../followups.js";
 import type * as generator from "../generator.js";
+import type * as github from "../github.js";
 import type * as http from "../http.js";
 import type * as lib_money from "../lib/money.js";
 import type * as lib_providers_fixture from "../lib/providers/fixture.js";
@@ -26,6 +27,7 @@ import type * as outreach from "../outreach.js";
 import type * as previews from "../previews.js";
 import type * as proposals from "../proposals.js";
 import type * as prospects from "../prospects.js";
+import type * as recon from "../recon.js";
 import type * as threads from "../threads.js";
 import type * as workspaces from "../workspaces.js";
 
@@ -43,6 +45,7 @@ declare const fullApi: ApiFromModules<{
   evidence: typeof evidence;
   followups: typeof followups;
   generator: typeof generator;
+  github: typeof github;
   http: typeof http;
   "lib/money": typeof lib_money;
   "lib/providers/fixture": typeof lib_providers_fixture;
@@ -54,6 +57,7 @@ declare const fullApi: ApiFromModules<{
   previews: typeof previews;
   proposals: typeof proposals;
   prospects: typeof prospects;
+  recon: typeof recon;
   threads: typeof threads;
   workspaces: typeof workspaces;
 }>;

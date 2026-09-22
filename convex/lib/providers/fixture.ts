@@ -9,6 +9,8 @@ import {
   GeneratedWebsiteSpecOutput,
   GeneratedOutreachOutput,
   ReplyClassificationOutput,
+  ScrapeResult,
+  AgentMailMessageItem,
 } from "./types";
 
 export const FIXTURE_PLACE_CANDIDATES: PlaceCandidateData[] = [
@@ -146,6 +148,39 @@ export class FixturePlacesProvider implements PlacesProvider {
 export class FixtureFirecrawlProvider implements FirecrawlProvider {
   async auditBusiness(_businessName: string, _domainOrQuery: string, _location: string): Promise<ScrapedSourceData[]> {
     return FIXTURE_SCRAPED_SOURCES;
+  }
+
+  async scrapeUrl(url: string): Promise<ScrapeResult> {
+    return {
+      url,
+      title: "The Rustic Kettle Café & Roastery",
+      description: "Queen West specialty roaster, single-origin coffees, and Scandinavian baked goods in Toronto.",
+      markdown: `# The Rustic Kettle Café & Roastery
+784 Queen St W, Toronto, ON M6J 1E9
+
+Small-batch Ethiopian & Colombian single-origins roasted weekly on Queen West. Fresh Scandinavian cardamom sourdough buns baked every morning at 6:30 AM. Heated dog-friendly sidewalk patio.
+
+## Hours of Operation
+- Monday – Friday: 7:00 AM – 6:00 PM
+- Saturday – Sunday: 8:00 AM – 5:00 PM
+
+## Contact
+Email: owner@rustickettle-example.ca
+Phone: +1 (416) 555-0194
+
+© 2019 The Rustic Kettle. All Rights Reserved.`,
+      links: [
+        "https://rustickettle-example.ca/menu",
+        "https://rustickettle-example.ca/about",
+        "https://rustickettle-example.ca/contact",
+      ],
+      statusCode: 200,
+      metadata: {
+        title: "The Rustic Kettle Café & Roastery",
+        description: "Queen West specialty roaster, single-origin coffees, and Scandinavian baked goods.",
+        statusCode: 200,
+      },
+    };
   }
 }
 
@@ -389,5 +424,19 @@ export class FixtureAgentMailProvider implements AgentMailProvider {
     const id = "msg_fixture_" + Math.random().toString(36).substring(2, 10);
     const threadId = "thread_fixture_" + Math.random().toString(36).substring(2, 10);
     return { messageId: id, threadId };
+  }
+
+  async listMessages(_inboxId: string): Promise<AgentMailMessageItem[]> {
+    return [
+      {
+        messageId: "msg_fixture_welcome",
+        threadId: "thread_fixture_welcome",
+        from: "admin@agentmail.to",
+        to: ["break-solutions@agentmail.to"],
+        subject: "Welcome to AgentMail, your inbox is ready",
+        text: "Welcome to AgentMail. Your inbox break-solutions@agentmail.to is live and ready for outbound pitches and inbound replies.",
+        createdAt: new Date().toISOString(),
+      },
+    ];
   }
 }

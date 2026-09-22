@@ -9,6 +9,8 @@ import {
   GeneratedWebsiteSpecOutput,
   GeneratedOutreachOutput,
   ReplyClassificationOutput,
+  ScrapeResult,
+  AgentMailMessageItem,
 } from "./types";
 import OpenAI from "openai";
 
@@ -164,6 +166,51 @@ export class LiveFirecrawlProvider implements FirecrawlProvider {
 
     return sources;
   }
+
+  async scrapeUrl(url: string): Promise<ScrapeResult> {
+    const apiUrl = "https://api.firecrawl.dev/v1/scrape";
+    const res = await fetch(apiUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${this.apiKey}`,
+      },
+      body: JSON.stringify({
+        url,
+        formats: ["markdown", "links"],
+        onlyMainContent: false,
+      }),
+    });
+
+    if (!res.ok) {
+      throw new Error(`Firecrawl scrape failed with status ${res.status}: ${res.statusText}`);
+    }
+
+    const json = (await res.json()) as {
+      success?: boolean;
+      data?: {
+        markdown?: string;
+        links?: string[];
+        metadata?: {
+          title?: string;
+          description?: string;
+          statusCode?: number;
+          [key: string]: any;
+        };
+      };
+    };
+
+    const data = json.data || {};
+    return {
+      url,
+      markdown: data.markdown || "",
+      title: data.metadata?.title || url,
+      description: data.metadata?.description || "",
+      links: data.links || [],
+      statusCode: data.metadata?.statusCode || res.status,
+      metadata: data.metadata,
+    };
+  }
 }
 
 export class LiveOpenAIProvider implements OpenAIProvider {
@@ -309,8 +356,12 @@ export class LiveAgentMailProvider implements AgentMailProvider {
     html?: string;
     inReplyToMessageId?: string;
   }): Promise<{ messageId: string; threadId: string }> {
-    const url = `https://api.agentmail.to/inboxes/${encodeURIComponent(input.inboxId)}/messages`;
-    const res = await fetch(url, {
+    let url = `https://api.agentmail.to/inboxes/${encodeURIComponent(input.inboxId)}/messages/send`;
+    if (input.inReplyToMessageId && !input.inReplyToMessageId.startsWith("<")) {
+      url = `https://api.agentmail.to/inboxes/${encodeURIComponent(input.inboxId)}/messages/${encodeURIComponent(input.inReplyToMessageId)}/reply`;
+    }
+
+    let res = await fetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -321,9 +372,26 @@ export class LiveAgentMailProvider implements AgentMailProvider {
         subject: input.subject,
         text: input.text,
         html: input.html,
-        in_reply_to: input.inReplyToMessageId,
       }),
     });
+
+    if (!res.ok && url.includes("/reply")) {
+      // Fallback to direct send if specific message ID not found on remote
+      const fallbackUrl = `https://api.agentmail.to/inboxes/${encodeURIComponent(input.inboxId)}/messages/send`;
+      res = await fetch(fallbackUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${this.apiKey}`,
+        },
+        body: JSON.stringify({
+          to: input.to,
+          subject: input.subject,
+          text: input.text,
+          html: input.html,
+        }),
+      });
+    }
 
     if (!res.ok) {
       throw new Error(`AgentMail send failed with status ${res.status}: ${res.statusText}`);
@@ -333,5 +401,43 @@ export class LiveAgentMailProvider implements AgentMailProvider {
       messageId: data.message_id || "msg_live_" + Date.now(),
       threadId: data.thread_id || "thread_live_" + Date.now(),
     };
+  }
+
+  async listMessages(inboxId: string): Promise<AgentMailMessageItem[]> {
+    const url = `https://api.agentmail.to/inboxes/${encodeURIComponent(inboxId)}/messages`;
+    const res = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${this.apiKey}`,
+      },
+    });
+
+    if (!res.ok) {
+      throw new Error(`AgentMail list messages failed with status ${res.status}: ${res.statusText}`);
+    }
+
+    const data = (await res.json()) as {
+      messages?: Array<{
+        messageId?: string;
+        message_id?: string;
+        threadId?: string;
+        thread_id?: string;
+        from?: string;
+        to?: string[];
+        subject?: string;
+        preview?: string;
+        text?: string;
+        createdAt?: string;
+      }>;
+    };
+
+    return (data.messages || []).map((m) => ({
+      messageId: m.messageId || m.message_id || "msg_live_" + Math.random().toString(36).substring(2, 9),
+      threadId: m.threadId || m.thread_id || "thread_live_" + Math.random().toString(36).substring(2, 9),
+      from: m.from || "",
+      to: m.to || [],
+      subject: m.subject || "",
+      text: m.text || m.preview || "",
+      createdAt: m.createdAt || new Date().toISOString(),
+    }));
   }
 }

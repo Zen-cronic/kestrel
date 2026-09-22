@@ -213,6 +213,7 @@ export default defineSchema({
     httpStatus: v.optional(v.number()),
     retrievedAt: v.number(),
     rawTextSnippet: v.optional(v.string()),
+    links: v.optional(v.array(v.string())),
   }).index("by_prospectId", ["prospectId"]),
 
   evidenceClaims: defineTable({
@@ -481,4 +482,53 @@ export default defineSchema({
   })
     .index("by_workspaceId_and_email", ["workspaceId", "email"])
     .index("by_email", ["email"]),
+
+  githubIntegrations: defineTable({
+    workspaceId: v.id("workspaces"),
+    repoFullName: v.string(),
+    branch: v.string(),
+    status: v.union(v.literal("connected"), v.literal("disconnected"), v.literal("syncing")),
+    webhookSecret: v.optional(v.string()),
+    lastCommitSha: v.optional(v.string()),
+    lastCommitMessage: v.optional(v.string()),
+    lastCommitAuthor: v.optional(v.string()),
+    autoDeployEnabled: v.boolean(),
+    notifyAgentMailOnDeploy: v.boolean(),
+    notificationRecipient: v.optional(v.string()),
+    connectedAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_workspaceId", ["workspaceId"]),
+
+  githubDeployments: defineTable({
+    workspaceId: v.id("workspaces"),
+    repoFullName: v.string(),
+    branch: v.string(),
+    commitSha: v.string(),
+    commitMessage: v.string(),
+    authorName: v.string(),
+    authorEmail: v.optional(v.string()),
+    status: v.union(
+      v.literal("queued"),
+      v.literal("building"),
+      v.literal("deployed"),
+      v.literal("failed")
+    ),
+    environment: v.string(),
+    deployUrl: v.string(),
+    agentMailStatus: v.union(
+      v.literal("not_configured"),
+      v.literal("queued"),
+      v.literal("sent"),
+      v.literal("skipped"),
+      v.literal("failed")
+    ),
+    agentMailThreadId: v.optional(v.string()),
+    buildLogs: v.array(v.string()),
+    durationMs: v.optional(v.number()),
+    triggeredAt: v.number(),
+    completedAt: v.optional(v.number()),
+  })
+    .index("by_workspaceId", ["workspaceId"])
+    .index("by_status", ["status"]),
 });
+

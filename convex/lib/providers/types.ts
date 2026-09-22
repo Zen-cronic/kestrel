@@ -45,8 +45,19 @@ export type ScrapedSourceData = {
   }>;
 };
 
+export type ScrapeResult = {
+  url: string;
+  markdown: string;
+  title: string;
+  description: string;
+  links: string[];
+  statusCode: number;
+  metadata?: Record<string, any>;
+};
+
 export interface FirecrawlProvider {
   auditBusiness(businessName: string, domainOrQuery: string, location: string): Promise<ScrapedSourceData[]>;
+  scrapeUrl(url: string): Promise<ScrapeResult>;
 }
 
 export type GeneratedBriefOutput = {
@@ -183,6 +194,16 @@ export interface OpenAIProvider {
   }): Promise<ReplyClassificationOutput>;
 }
 
+export type AgentMailMessageItem = {
+  messageId: string;
+  threadId: string;
+  from: string;
+  to: string[];
+  subject: string;
+  text: string;
+  createdAt: string;
+};
+
 export interface AgentMailProvider {
   sendMessage(input: {
     inboxId: string;
@@ -192,4 +213,5 @@ export interface AgentMailProvider {
     html?: string;
     inReplyToMessageId?: string;
   }): Promise<{ messageId: string; threadId: string }>;
+  listMessages(inboxId: string): Promise<AgentMailMessageItem[]>;
 }

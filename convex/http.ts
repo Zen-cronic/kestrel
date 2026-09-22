@@ -62,8 +62,8 @@ http.route({
     new Response(
       JSON.stringify({
         ok: true,
-        service: "Storefront Desk",
-        version: "0.1.0-provisional",
+        service: "Kestrel",
+        version: "1.0.0",
         mode: process.env.PROVIDER_MODE || "fixture",
         at: Date.now(),
       }),

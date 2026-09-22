@@ -1,7 +1,7 @@
-import { internalAction, internalMutation, internalQuery, mutation, query } from "./_generated/server";
+import { action, internalAction, internalMutation, internalQuery, mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
-import { getOpenAIProvider } from "./lib/providers";
+import { getAgentMailProvider, getOpenAIProvider } from "./lib/providers";
 import { replyClassification } from "./schema";
 
 export const getThread = query({
@@ -398,5 +398,167 @@ export const simulateInboundReply = mutation({
     });
 
     return null;
+  },
+});
+
+export const getSendContext = internalQuery({
+  args: { prospectId: v.id("prospects") },
+  handler: async (ctx, { prospectId }) => {
+    const prospect = await ctx.db.get(prospectId);
+    if (!prospect) return null;
+    const thread = await ctx.db
+      .query("agentMailThreads")
+      .withIndex("by_prospectId", (q) => q.eq("prospectId", prospectId))
+      .first();
+    return { prospect, thread };
+  },
+});
+
+export const recordOutboundMessage = internalMutation({
+  args: {
+    prospectId: v.id("prospects"),
+    threadId: v.string(),
+    messageId: v.string(),
+    from: v.string(),
+    to: v.array(v.string()),
+    subject: v.string(),
+    text: v.string(),
+    via: v.union(v.literal("agentmail"), v.literal("fixture")),
+  },
+  returns: v.id("agentMailMessages"),
+  handler: async (ctx, args) => {
+    const prospect = await ctx.db.get(args.prospectId);
+    if (!prospect) throw new Error("Prospect not found");
+
+    const now = Date.now();
+    const msgId = await ctx.db.insert("agentMailMessages", {
+      workspaceId: prospect.workspaceId,
+      prospectId: args.prospectId,
+      threadId: args.threadId,
+      messageId: args.messageId,
+      direction: "outbound",
+      from: args.from,
+      to: args.to,
+      subject: args.subject,
+      text: args.text,
+      via: args.via,
+      receivedOrSentAt: now,
+    });
+
+    const thread = await ctx.db
+      .query("agentMailThreads")
+      .withIndex("by_threadId", (q) => q.eq("threadId", args.threadId))
+      .first();
+
+    if (thread) {
+      await ctx.db.patch(thread._id, {
+        lastMessageAt: now,
+        messageCount: thread.messageCount + 1,
+      });
+    }
+
+    await ctx.db.insert("activityLedger", {
+      workspaceId: prospect.workspaceId,
+      campaignId: prospect.campaignId,
+      prospectId: args.prospectId,
+      actor: "operator",
+      kind: "outreach_email_sent",
+      summary: `Operator sent reply to ${args.to.join(", ")} via ${args.via}.`,
+      details: args.text.slice(0, 200),
+      at: now,
+    });
+
+    return msgId;
+  },
+});
+
+export const sendLiveReply = action({
+  args: {
+    prospectId: v.id("prospects"),
+    text: v.string(),
+    inReplyToMessageId: v.optional(v.string()),
+  },
+  returns: v.object({
+    ok: v.boolean(),
+    messageId: v.string(),
+    threadId: v.string(),
+  }),
+  handler: async (ctx, args) => {
+    const data: any = await ctx.runQuery(internal.threads.getSendContext, { prospectId: args.prospectId });
+    if (!data?.prospect) throw new Error("Prospect not found");
+
+    const prospect = data.prospect;
+    const thread = data.thread;
+    const threadId = thread?.threadId || prospect.activeThreadId || `thread_${Date.now()}`;
+    const subject = thread?.subject?.startsWith("Re:") ? thread.subject : `Re: ${thread?.subject || "Storefront Modernization"}`;
+
+    const agentMail = getAgentMailProvider();
+    const inboxId = process.env.AGENTMAIL_INBOX_ID || "break-solutions@agentmail.to";
+
+    const res = await agentMail.sendMessage({
+      inboxId,
+      to: [prospect.targetEmail],
+      subject,
+      text: args.text,
+      inReplyToMessageId: args.inReplyToMessageId,
+    });
+
+    await ctx.runMutation(internal.threads.recordOutboundMessage, {
+      prospectId: args.prospectId,
+      threadId,
+      messageId: res.messageId,
+      from: inboxId,
+      to: [prospect.targetEmail],
+      subject,
+      text: args.text,
+      via: process.env.PROVIDER_MODE === "live" ? "agentmail" : "fixture",
+    });
+
+    return {
+      ok: true,
+      messageId: res.messageId,
+      threadId: res.threadId,
+    };
+  },
+});
+
+export const syncAgentMailInbox = action({
+  args: {
+    inboxId: v.optional(v.string()),
+  },
+  returns: v.object({
+    ok: v.boolean(),
+    inboxId: v.string(),
+    messagesFetched: v.number(),
+  }),
+  handler: async (ctx, args) => {
+    const targetInbox = args.inboxId || process.env.AGENTMAIL_INBOX_ID || "break-solutions@agentmail.to";
+    const agentMail = getAgentMailProvider();
+
+    const messages = await agentMail.listMessages(targetInbox);
+
+    let ingested = 0;
+    for (const msg of messages) {
+      try {
+        const rec = await ctx.runMutation(internal.threads.recordInbound, {
+          messageId: msg.messageId,
+          threadId: msg.threadId,
+          from: msg.from,
+          to: msg.to,
+          subject: msg.subject,
+          text: msg.text,
+          via: "agentmail",
+        });
+        if (rec) ingested++;
+      } catch {
+        // Ignore duplicate / unmatched messages gracefully
+      }
+    }
+
+    return {
+      ok: true,
+      inboxId: targetInbox,
+      messagesFetched: messages.length,
+    };
   },
 });
