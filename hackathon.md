@@ -4,7 +4,7 @@
 - **Event:** Convex All Gas Hackathon (sponsored by Convex, OpenAI, Firecrawl, & AgentMail)
 - **What it does:** Autonomous SMB modernization forge turning 30% delivery commission bleed into owned, high-converting digital storefronts. Combines Google Places discovery, Firecrawl open-web citations, OpenAI structured briefs and responsive specifications, operator-owned AgentMail negotiation threads, and continuous GitHub CI/CD.
 - **Live app:** https://glad-pony-138.convex.site (Local development URL: http://localhost:5173)
-- **Demo video:** Under 3:00 cap (2m 53s), 1080p, voiced by ElevenLabs Asian-American narrator (`XZM9UQFQ3SrdFWmfTJjC`), packaged at `submission/kestrel/kestrel-demo-reel.mp4`.
+- **Demo video:** Under 3:00 cap (2m 53s), 1080p, voiced by ElevenLabs Asian-American narrator (`XZM9UQFQ3SrdFWmfTJjC`), published at https://youtu.be/r1zigRL3lpo (master packaged at `submission/kestrel/kestrel-demo-reel.mp4`).
 - **Repo:** https://github.com/Zen-cronic/kestrel
 - **Frontend:** React 19 + TypeScript + Vite + Tailwind CSS (hosted on Convex static hosting)
 - **Convex deployment:** dev:glad-pony-138 (cloud development deployment under team kaung-zin-hein / storefront-desk)
@@ -83,5 +83,10 @@ Elevated Kestrel into an 8-desk mission control center. Added live on-demand Age
 ### 7. Video Demo
 - **Runtime:** **172.64s (2m 53s)** — strictly under the 3:00 (180s) cap.
 - **Content:** 100% real product screencast across 9 scenes covering problem, architecture, Firecrawl audit, responsive storefront studio, outreach approval revocation, AgentMail live negotiations, sovereign human gate, and GitHub CI/CD auto-deploy.
+- **YouTube Link:** [https://youtu.be/r1zigRL3lpo](https://youtu.be/r1zigRL3lpo)
 - **Master File:** Packaged at `submission/kestrel/kestrel-demo-reel.mp4`.
+
+### 2026-09-22 - Final Video Publication & VibeApps Package
+Recorded and assembled final 1080p demo reel (172.64s) voiced by ElevenLabs Asian-American narrator (`XZM9UQFQ3SrdFWmfTJjC`). Published to YouTube at `https://youtu.be/r1zigRL3lpo`. Generated 1920x1080 studio launch thumbnail (`youtube_thumbnail.png`) and comprehensive metadata kit (`YOUTUBE_METADATA.md`). Prepared 1:1 copy-paste fields and 4K Retina screenshot bundle in `submission/kestrel/` for final VibeApps submission.
+
 
