@@ -39,4 +39,49 @@ Overhauled visual density across the application to eliminate cramping: added a 
 Built a fully reproducible, automated demo video generation pipeline under `film/` mirroring production cinema standards: synthesized 8 beat-matched narration tracks via Google Gemini TTS (`gemini-3.1-flash-tts-preview`, voice `Puck`, total duration ~180s), automated 1920×1080 visual plate capture across all 8 screenplay scenes using headless Playwright against the live local application, and built FFmpeg composition script (`film/assemble-reel.ts`) with custom typography and lower-thirds along with an automated verification suite (`film/verify-reel.ts`). In parallel, verified live third-party integrations: confirmed 21,400 active Firecrawl paid credits, configured AgentMail MCP and inbox `break-solutions@agentmail.to`, and corrected outbound AgentMail REST routing in `convex/lib/providers/live.ts`. Prepared comprehensive hackathon submission package in `submission/placeholder-1/` including `SUBMISSION.md`, `JUDGES_GUIDE.md`, `CHECKLIST.md`, and `COPY_PASTE_FIELDS.txt`.
 
 ### 2026-09-22 - Final Product Architecture, Live Inboxes, CI/CD Desk, & ElevenLabs Demo Master
-Elevated Kestrel into an 8-desk mission control center. Added live on-demand AgentMail inbox synchronization with dedicated webhook processing and interactive reply composer. Implemented live GitHub CI/CD Desk (`/deployments`) with simulated push webhooks and automated release notifications sent via AgentMail. Re-shot and remastered the master demo reel to 9 scenes with bespoke Asian-American male narration via ElevenLabs voice Min (`XZM9UQFQ3SrdFWmfTJjC`), verified at 172.64s (2m 53s, strictly under the 3:00 cap). Expanded test suite to 16/16 passing automated tests covering money math, provider fixtures, Firecrawl scraping, AgentMail sync, and Convex backend invariant enforcement. Packaged final submission suite under `submission/kestrel/`.
+Elevated Kestrel into an 8-desk mission control center. Added live on-demand AgentMail inbox synchronization with dedicated webhook processing and interactive reply composer. Implemented live GitHub CI/CD Desk (`/deployments`) with simulated push webhooks and automated release notifications sent via AgentMail. Re-shot and remastered the master demo reel to 9 scenes with bespoke Asian-American male narration via ElevenLabs voice Min (`XZM9UQFQ3SrdFWmfTJjC`), verified at 172.64s (2m 53s, strictly under the 3:00 cap). Expanded test suite to 16/16 passing automated tests covering money math, provider fixtures, Firecrawl scraping, AgentMail sync, and Convex backend invariant enforcement. Packaged final submission suite under `submission/kestrel/`. Deployed live production frontend to Convex static hosting at `https://glad-pony-138.convex.site`.
+
+---
+
+## Qualification and Judging Criteria Alignment
+
+### 1. Everyday Apps, Not Developer Tools
+- **Domain:** Hospitality, independent restaurants, specialty coffee roasters, and local neighborhood bakeries.
+- **Urgent Economic Pain:** Across North America, independent restaurants operate on thin 6–8% net margins while surrendering **15% to 30% in commission fees** on every order to third-party delivery aggregators (DoorDash, UberEats).
+- **Core Mechanism:** Kestrel is not a developer utility, CLI, or library. It is an everyday business operations forge that directly modernizes digital presence, recovers customer relationships, and converts aggregator delivery bleed into owned first-party revenue.
+
+### 2. Creativity and Usefulness
+- **The Inverted Agency Loop:** Instead of requiring overworked business owners to complete 6-week design questionnaires, Kestrel discovers high-reputation, website-less businesses, audits their live presence, synthesizes a responsive storefront, and opens a personalized negotiation in under 90 seconds.
+- **Anti-Hallucination Brand Safety:** Enforces RFC-92 evidence grounding. Unconfirmed services are flagged as `Needs Confirmation` rather than fabricated, protecting real-world businesses from brand risk.
+
+### 3. Convex Depth
+- **17 Normalized Relational Tables:** `workspaces`, `workspaceMembers`, `campaigns`, `discoverySearches`, `placesCandidates`, `prospects`, `sourceDocuments`, `evidenceClaims`, `businessBriefs`, `websiteSpecs`, `outreachDrafts`, `proposals`, `agentMailThreads`, `agentMailMessages`, `followupSchedules`, `activityLedger`, and `suppressions`.
+- **Reactive WebSocket Synchronization:** Zero polling across all 8 desks. All proposal adjustments, inbound emails, counteroffers, and audit logs stream live.
+- **Scheduled Background Crons:** Automated follow-up schedules with strict 2-attempt limits, 3-day delays, and instant reactive cancellation upon reply.
+- **HTTP Routing:** Dedicated endpoints for Svix-verified AgentMail webhooks (`/agentmail/webhook`) and service health telemetry (`/health`).
+- **5 Official Convex Components:** Registered and active in `convex/convex.config.ts`:
+  1. `@convex-dev/static-hosting` (serves the live web application)
+  2. `@convex-dev/agent` (manages AI workflow orchestration)
+  3. `@convex-dev/rate-limiter` (protects external service quotas)
+  4. `@agentmail/convex` (operates dedicated email inboxes)
+  5. `@firecrawl/firecrawl-convex` (drives on-demand web scraping)
+- **Monetary Invariants:** All pricing and counteroffers use 64-bit integer cents (`priceCents`) to eliminate floating-point inaccuracies.
+
+### 4. Sponsor Stack (Load-Bearing, Not Decorative)
+- **Convex:** The relational database, reactive sync engine, scheduled follow-up crons, and static file host.
+- **OpenAI:** Powered by Responses API (`gpt-5.6-terra`) via `@convex-dev/agent`. Generates typed `zod` JSON schemas for diagnostic briefs, complete responsive website specifications, personalized outreach pitches, and structured counteroffer commercial diffs.
+- **Firecrawl:** On-demand live web scrapers (`convex/recon.ts`, `convex/evidence.ts`) inspect website deficiencies (stale copyright, missing SSL, missing SEO meta) and extract verified factual truth claims.
+- **AgentMail:** Dedicated domain inbox (`break-solutions@agentmail.to`), Svix webhook verification, live bidirectional email synchronization, and automated GitHub CI/CD release notifications.
+
+### 5. Live URL
+- **Verified Public URL:** `https://glad-pony-138.convex.site` (hosted directly on Convex static hosting).
+- **Zero-Setup Evaluation:** Judges can click through all 8 interactive desks with pre-configured live and deterministic fixture fallbacks. No login, invite, or API keys required.
+
+### 6. Social Proof
+- Comprehensive launch copy, 5-tweet thread, and LinkedIn announcement prepared in `submission/kestrel/X_POST.md` tagging `@convex_dev`, `@OpenAI`, `@firecrawl_dev`, and `@agentmail_to` with `#ConvexAllGas`.
+
+### 7. Video Demo
+- **Runtime:** **172.64s (2m 53s)** — strictly under the 3:00 (180s) cap.
+- **Content:** 100% real product screencast across 9 scenes covering problem, architecture, Firecrawl audit, responsive storefront studio, outreach approval revocation, AgentMail live negotiations, sovereign human gate, and GitHub CI/CD auto-deploy.
+- **Master File:** Packaged at `submission/kestrel/kestrel-demo-reel.mp4`.
+
