@@ -1,6 +1,6 @@
-# Kestrel — Autonomous SMB Modernization Forge
+# Kestrel — Autonomous Storefront Forge for Local Restaurants
 
-> **Turn 30% delivery app commission bleed into owned, high-converting digital storefronts in under 90 seconds.**
+> **Turns 30% delivery app fees into owned, verified digital storefronts for local restaurants in 90 seconds.**
 
 [![Convex All Gas Hackathon](https://img.shields.io/badge/Convex-All_Gas_Hackathon-orange.svg)](https://www.convex.dev/hackathons/all-gas)
 [![Live Demo](https://img.shields.io/badge/Live_App-glad--pony--138.convex.site-blue.svg)](https://glad-pony-138.convex.site)
@@ -92,7 +92,7 @@ npm run build     # Production client bundle verification
 
 - **Judges Guide & Speedrun:** [`docs/DEMO.md`](docs/DEMO.md) & [`submission/kestrel/JUDGES_GUIDE.md`](submission/kestrel/JUDGES_GUIDE.md)
 - **Detailed Written Submission:** [`submission/kestrel/SUBMISSION.md`](submission/kestrel/SUBMISSION.md)
-- **VibeApps Form Fields:** [`submission/kestrel/COPY_PASTE_FIELDS.txt`](submission/kestrel/COPY_PASTE_FIELDS.txt)
+- **VibeApps Form Fields:** [`submission/kestrel/COPY_PASTE_FIELDS.md`](submission/kestrel/COPY_PASTE_FIELDS.md)
 - **Living Hackathon Build Log:** [`hackathon.md`](hackathon.md)
 
 ## 📄 License

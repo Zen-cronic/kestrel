@@ -2,7 +2,7 @@
 
 - **Project:** Kestrel
 - **Event:** Convex All Gas Hackathon (sponsored by Convex, OpenAI, Firecrawl, & AgentMail)
-- **What it does:** Autonomous SMB modernization forge turning 30% delivery commission bleed into owned, high-converting digital storefronts. Combines Google Places discovery, Firecrawl open-web citations, OpenAI structured briefs and responsive specifications, operator-owned AgentMail negotiation threads, and continuous GitHub CI/CD.
+- **What it does:** Turns 30% delivery app fees into owned, verified digital storefronts for local restaurants in 90 seconds. Combines Google Places discovery, Firecrawl open-web citations, OpenAI structured briefs and responsive specifications, operator-owned AgentMail negotiation threads, and continuous GitHub CI/CD.
 - **Live app:** https://glad-pony-138.convex.site (Local development URL: http://localhost:5173)
 - **Demo video:** Under 3:00 cap (2m 53s), 1080p, voiced by ElevenLabs Asian-American narrator (`XZM9UQFQ3SrdFWmfTJjC`), published at https://youtu.be/r1zigRL3lpo (master packaged at `submission/kestrel/kestrel-demo-reel.mp4`).
 - **Repo:** https://github.com/Zen-cronic/kestrel
