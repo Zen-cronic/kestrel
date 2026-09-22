@@ -1,14 +1,104 @@
 import { useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useSearchParams } from "react-router-dom";
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 
+type ThemeVariantKey = "warm-artisan" | "nordic-light" | "sage-botanical" | "obsidian-dark";
+
+interface ThemeDefinition {
+  name: string;
+  label: string;
+  bg: string;
+  cardBg: string;
+  primaryColor: string;
+  accentColor: string;
+  textColor: string;
+  borderColor: string;
+  badgeBg: string;
+  badgeColor: string;
+  btnPrimaryBg: string;
+  btnPrimaryColor: string;
+  fontHeading: string;
+  fontBody: string;
+}
+
+const THEMES: Record<ThemeVariantKey, ThemeDefinition> = {
+  "warm-artisan": {
+    name: "Warm Artisan",
+    label: "Light Parchment",
+    bg: "#faf7f2",
+    cardBg: "#ffffff",
+    primaryColor: "#2b1810",
+    accentColor: "#c87d55",
+    textColor: "#5a3f33",
+    borderColor: "#ebd9c8",
+    badgeBg: "#eaddd0",
+    badgeColor: "#78350f",
+    btnPrimaryBg: "#c87d55",
+    btnPrimaryColor: "#ffffff",
+    fontHeading: "Fraunces, Georgia, serif",
+    fontBody: "Inter, sans-serif",
+  },
+  "nordic-light": {
+    name: "Nordic Alabaster",
+    label: "Crisp Alabaster Light",
+    bg: "#ffffff",
+    cardBg: "#f8fafc",
+    primaryColor: "#09090b",
+    accentColor: "#2563eb",
+    textColor: "#334155",
+    borderColor: "#e2e8f0",
+    badgeBg: "#e0e7ff",
+    badgeColor: "#3730a3",
+    btnPrimaryBg: "#09090b",
+    btnPrimaryColor: "#ffffff",
+    fontHeading: "-apple-system, BlinkMacSystemFont, 'Inter', sans-serif",
+    fontBody: "Inter, sans-serif",
+  },
+  "sage-botanical": {
+    name: "Sage Botanical",
+    label: "Botanical Hearth Light",
+    bg: "#f4f7f4",
+    cardBg: "#ffffff",
+    primaryColor: "#1b382b",
+    accentColor: "#2d6a4f",
+    textColor: "#344e41",
+    borderColor: "#d8e2dc",
+    badgeBg: "#d8f3dc",
+    badgeColor: "#1b4332",
+    btnPrimaryBg: "#2d6a4f",
+    btnPrimaryColor: "#ffffff",
+    fontHeading: "Fraunces, Georgia, serif",
+    fontBody: "Inter, sans-serif",
+  },
+  "obsidian-dark": {
+    name: "Obsidian Roastery",
+    label: "Dark Roast Mode",
+    bg: "#09090b",
+    cardBg: "#121318",
+    primaryColor: "#f4f4f5",
+    accentColor: "#f59e0b",
+    textColor: "#94a3b8",
+    borderColor: "#27272a",
+    badgeBg: "rgba(245, 158, 11, 0.12)",
+    badgeColor: "#fbbf24",
+    btnPrimaryBg: "#f59e0b",
+    btnPrimaryColor: "#09090b",
+    fontHeading: "Fraunces, Georgia, serif",
+    fontBody: "Inter, sans-serif",
+  },
+};
+
 export default function WebsitePreview() {
   const { slug } = useParams<{ slug: string }>();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialVariant = (searchParams.get("variant") as ThemeVariantKey) || "warm-artisan";
+  const [activeVariant, setActiveVariant] = useState<ThemeVariantKey>(initialVariant);
   const [viewport, setViewport] = useState<"desktop" | "mobile">("desktop");
   const [showEvidenceDrawer, setShowEvidenceDrawer] = useState(false);
 
   const site = useQuery(api.previews.getBySlug, slug ? { slug } : "skip");
+  const currentTheme = THEMES[activeVariant] || THEMES["warm-artisan"];
 
   if (site === undefined) {
     return (
@@ -85,7 +175,39 @@ export default function WebsitePreview() {
           </span>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
+          {/* Theme Variant Selector */}
+          <div style={{ display: "flex", background: "#090d16", borderRadius: "8px", padding: "3px", border: "1px solid rgba(255,255,255,0.1)", gap: "2px" }}>
+            {(Object.keys(THEMES) as ThemeVariantKey[]).map((key) => {
+              const t = THEMES[key];
+              const isActive = activeVariant === key;
+              return (
+                <button
+                  key={key}
+                  onClick={() => {
+                    setActiveVariant(key);
+                    setSearchParams({ variant: key });
+                  }}
+                  style={{
+                    background: isActive ? "#1e293b" : "transparent",
+                    color: isActive ? "#ffffff" : "#94a3b8",
+                    border: "none",
+                    padding: "5px 10px",
+                    fontSize: "11.5px",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    borderRadius: "6px",
+                    transition: "all var(--duration-fast) var(--ease-spring)",
+                    whiteSpace: "nowrap",
+                  }}
+                  title={t.label}
+                >
+                  {t.name}
+                </button>
+              );
+            })}
+          </div>
+
           <div className="viewport-toggle-group">
             <button
               className={`viewport-btn ${viewport === "desktop" ? "active" : ""}`}
@@ -119,7 +241,7 @@ export default function WebsitePreview() {
               boxShadow: showEvidenceDrawer ? "0 0 0 2px rgba(15, 118, 110, 0.4)" : "none",
             }}
           >
-            📑 {showEvidenceDrawer ? "Hide Grounding Citations" : "Inspect Grounding Citations"}
+            📑 {showEvidenceDrawer ? "Hide Citations" : "Citations"}
           </button>
         </div>
       </div>
@@ -187,7 +309,7 @@ export default function WebsitePreview() {
       >
         <div
           className={viewport === "mobile" ? "phone-chassis" : ""}
-          style={viewport === "desktop" ? { width: "100%", minHeight: "100vh", background: "#faf7f2" } : undefined}
+          style={viewport === "desktop" ? { width: "100%", minHeight: "100vh", background: currentTheme.bg } : undefined}
         >
           {viewport === "mobile" && (
             <div className="phone-notch-bar">
@@ -196,7 +318,7 @@ export default function WebsitePreview() {
           )}
           <div className={viewport === "mobile" ? "phone-screen" : ""}>
             {/* Rendered Storefront Site */}
-            <div className="storefront-site">
+            <div className="storefront-site" style={{ background: currentTheme.bg, color: currentTheme.textColor, fontFamily: currentTheme.fontBody }}>
             {/* Site Navigation */}
             <header
               style={{
@@ -204,7 +326,7 @@ export default function WebsitePreview() {
                 justifyContent: "space-between",
                 alignItems: "center",
                 padding: "20px 24px",
-                borderBottom: "1px solid #ebd9c8",
+                borderBottom: `1px solid ${currentTheme.borderColor}`,
                 flexWrap: "wrap",
                 gap: "12px",
               }}
@@ -212,11 +334,11 @@ export default function WebsitePreview() {
               <div>
                 <span
                   style={{
-                    fontFamily: site.theme.fontHeading,
+                    fontFamily: currentTheme.fontHeading,
                     fontSize: "20px",
                     fontWeight: 800,
                     letterSpacing: "-0.02em",
-                    color: site.theme.primaryColor,
+                    color: currentTheme.primaryColor,
                   }}
                 >
                   {site.businessIdentity.name}
@@ -227,7 +349,7 @@ export default function WebsitePreview() {
                     fontSize: "11px",
                     textTransform: "uppercase",
                     letterSpacing: "0.06em",
-                    color: site.theme.accentColor,
+                    color: currentTheme.accentColor,
                     fontWeight: 700,
                   }}
                 >
@@ -242,7 +364,7 @@ export default function WebsitePreview() {
                     href={item.anchor}
                     style={{
                       textDecoration: "none",
-                      color: "#6e4c3e",
+                      color: currentTheme.textColor,
                       fontSize: "13px",
                       fontWeight: 600,
                     }}
@@ -255,20 +377,30 @@ export default function WebsitePreview() {
 
             {/* Site Hero Section */}
             <section className="site-hero">
-              <span className="site-badge">{site.hero.badge}</span>
+              <span className="site-badge" style={{ background: currentTheme.badgeBg, color: currentTheme.badgeColor }}>
+                {site.hero.badge}
+              </span>
               <h1
                 className="site-headline"
-                style={{ fontFamily: site.theme.fontHeading, color: site.theme.primaryColor }}
+                style={{ fontFamily: currentTheme.fontHeading, color: currentTheme.primaryColor }}
               >
                 {site.hero.headline}
               </h1>
-              <p className="site-subhead">{site.hero.subheadline}</p>
+              <p className="site-subhead" style={{ color: currentTheme.textColor }}>{site.hero.subheadline}</p>
               <div className="site-cta-group">
-                <a href={site.hero.primaryCta.action} className="site-btn-primary">
+                <a
+                  href={site.hero.primaryCta.action}
+                  className="site-btn-primary"
+                  style={{ background: currentTheme.btnPrimaryBg, color: currentTheme.btnPrimaryColor }}
+                >
                   {site.hero.primaryCta.label}
                 </a>
                 {site.hero.secondaryCta && (
-                  <a href={site.hero.secondaryCta.action} className="site-btn-secondary">
+                  <a
+                    href={site.hero.secondaryCta.action}
+                    className="site-btn-secondary"
+                    style={{ borderColor: currentTheme.btnPrimaryBg, color: currentTheme.primaryColor }}
+                  >
                     {site.hero.secondaryCta.label}
                   </a>
                 )}
@@ -279,11 +411,11 @@ export default function WebsitePreview() {
             <section id="about" className="site-section">
               <h2
                 className="site-section-title"
-                style={{ fontFamily: site.theme.fontHeading, color: site.theme.primaryColor }}
+                style={{ fontFamily: currentTheme.fontHeading, color: currentTheme.primaryColor }}
               >
                 {site.aboutSection.title}
               </h2>
-              <div style={{ maxWidth: "700px", margin: "0 auto 32px", fontSize: "16px", lineHeight: 1.7, color: "#6e4c3e" }}>
+              <div style={{ maxWidth: "700px", margin: "0 auto 32px", fontSize: "16px", lineHeight: 1.7, color: currentTheme.textColor }}>
                 {site.aboutSection.storyParagraphs.map((p: string, idx: number) => (
                   <p key={idx} style={{ marginBottom: "16px" }}>
                     {p}
@@ -303,14 +435,15 @@ export default function WebsitePreview() {
                   <div
                     key={idx}
                     style={{
-                      background: "white",
-                      border: "1px solid #ebd9c8",
+                      background: currentTheme.cardBg,
+                      border: `1px solid ${currentTheme.borderColor}`,
                       borderRadius: "8px",
                       padding: "16px",
                       textAlign: "center",
                       fontWeight: 700,
                       fontSize: "14px",
-                      color: site.theme.primaryColor,
+                      color: currentTheme.primaryColor,
+                      boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
                     }}
                   >
                     ✨ {h}
@@ -323,30 +456,38 @@ export default function WebsitePreview() {
             <section id="offerings" className="site-section">
               <h2
                 className="site-section-title"
-                style={{ fontFamily: site.theme.fontHeading, color: site.theme.primaryColor }}
+                style={{ fontFamily: currentTheme.fontHeading, color: currentTheme.primaryColor }}
               >
                 {site.offeringsSection.title}
               </h2>
-              <p className="site-section-desc">{site.offeringsSection.description}</p>
+              <p className="site-section-desc" style={{ color: currentTheme.textColor }}>{site.offeringsSection.description}</p>
 
               <div className="offerings-grid">
                 {site.offeringsSection.items.map((it: any, idx: number) => (
-                  <div key={idx} className="offering-card">
+                  <div
+                    key={idx}
+                    className="offering-card"
+                    style={{
+                      background: currentTheme.cardBg,
+                      border: `1px solid ${currentTheme.borderColor}`,
+                      boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
+                    }}
+                  >
                     <div>
                       <div className="offering-header">
-                        <span className="offering-name" style={{ fontFamily: site.theme.fontHeading }}>
+                        <span className="offering-name" style={{ fontFamily: currentTheme.fontHeading, color: currentTheme.primaryColor }}>
                           {it.name}
                         </span>
-                        {it.priceDisplay && <span className="offering-price">{it.priceDisplay}</span>}
+                        {it.priceDisplay && <span className="offering-price" style={{ color: currentTheme.accentColor }}>{it.priceDisplay}</span>}
                       </div>
-                      <p className="offering-desc">{it.description}</p>
+                      <p className="offering-desc" style={{ color: currentTheme.textColor }}>{it.description}</p>
                     </div>
                     {it.badge && (
                       <div style={{ marginTop: "12px" }}>
                         <span
                           style={{
-                            background: "#eaddd0",
-                            color: "#78350f",
+                            background: currentTheme.badgeBg,
+                            color: currentTheme.badgeColor,
                             fontSize: "11px",
                             fontWeight: 700,
                             padding: "3px 8px",
@@ -366,7 +507,7 @@ export default function WebsitePreview() {
             <section id="location" className="site-section">
               <h2
                 className="site-section-title"
-                style={{ fontFamily: site.theme.fontHeading, color: site.theme.primaryColor }}
+                style={{ fontFamily: currentTheme.fontHeading, color: currentTheme.primaryColor }}
               >
                 Hours &amp; Location
               </h2>
@@ -374,10 +515,12 @@ export default function WebsitePreview() {
                 style={{
                   maxWidth: "500px",
                   margin: "0 auto",
-                  background: "white",
+                  background: currentTheme.cardBg,
                   padding: "24px",
                   borderRadius: "12px",
-                  border: "1px solid #ebd9c8",
+                  border: `1px solid ${currentTheme.borderColor}`,
+                  color: currentTheme.primaryColor,
+                  boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
                 }}
               >
                 <div style={{ fontSize: "16px", fontWeight: 700, marginBottom: "16px" }}>
@@ -387,7 +530,7 @@ export default function WebsitePreview() {
                   {site.hoursAndLocation.hours.map((h: any, idx: number) => (
                     <div key={idx} style={{ display: "flex", justifyContent: "space-between" }}>
                       <strong>{h.days}</strong>
-                      <span>
+                      <span style={{ color: currentTheme.textColor }}>
                         {h.open} – {h.close}
                       </span>
                     </div>
@@ -398,9 +541,9 @@ export default function WebsitePreview() {
                     style={{
                       marginTop: "16px",
                       paddingTop: "16px",
-                      borderTop: "1px dashed #ebd9c8",
+                      borderTop: `1px dashed ${currentTheme.borderColor}`,
                       fontSize: "13px",
-                      color: "#6e4c3e",
+                      color: currentTheme.textColor,
                     }}
                   >
                     ☕ {site.hoursAndLocation.note}
@@ -413,17 +556,17 @@ export default function WebsitePreview() {
             <section id="contact" className="site-section" style={{ textAlign: "center" }}>
               <h2
                 className="site-section-title"
-                style={{ fontFamily: site.theme.fontHeading, color: site.theme.primaryColor }}
+                style={{ fontFamily: currentTheme.fontHeading, color: currentTheme.primaryColor }}
               >
                 Contact &amp; Reservations
               </h2>
-              <p style={{ fontSize: "16px", color: "#6e4c3e", marginBottom: "16px" }}>
+              <p style={{ fontSize: "16px", color: currentTheme.textColor, marginBottom: "16px" }}>
                 {site.contactSection.reservationNotice}
               </p>
               <div style={{ fontSize: "15px", fontWeight: 600 }}>
-                ✉️ <a href={`mailto:${site.contactSection.email}`} style={{ color: site.theme.accentColor }}>{site.contactSection.email}</a>
+                ✉️ <a href={`mailto:${site.contactSection.email}`} style={{ color: currentTheme.accentColor }}>{site.contactSection.email}</a>
                 {site.contactSection.phone && (
-                  <span style={{ marginLeft: "16px" }}>📞 {site.contactSection.phone}</span>
+                  <span style={{ marginLeft: "16px", color: currentTheme.primaryColor }}>📞 {site.contactSection.phone}</span>
                 )}
               </div>
 
@@ -432,22 +575,22 @@ export default function WebsitePreview() {
                   style={{
                     maxWidth: "600px",
                     margin: "40px auto 0",
-                    background: "#fefce8",
-                    border: "1px dashed #ca8a04",
+                    background: "rgba(245, 158, 11, 0.08)",
+                    border: "1px dashed rgba(245, 158, 11, 0.3)",
                     borderRadius: "8px",
                     padding: "16px",
                     fontSize: "13px",
-                    color: "#854d0e",
+                    color: currentTheme.textColor,
                     textAlign: "left",
                   }}
                 >
-                  <strong>⚠️ Unconfirmed Services Notice:</strong>
+                  <strong style={{ color: "#d97706" }}>⚠️ Unconfirmed Services Notice:</strong>
                   {site.unknownItems.map((u: string, idx: number) => (
                     <div key={idx} style={{ marginTop: "4px" }}>
                       • {u}
                     </div>
                   ))}
-                  <div style={{ marginTop: "8px", fontSize: "11px", color: "#a16207" }}>
+                  <div style={{ marginTop: "8px", fontSize: "11px", color: "#9ca3af" }}>
                     (Storefront Desk marks missing public details as needs confirmation rather than inventing them.)
                   </div>
                 </div>
@@ -457,11 +600,12 @@ export default function WebsitePreview() {
             {/* Footer */}
             <footer
               style={{
-                borderTop: "1px solid #ebd9c8",
+                borderTop: `1px solid ${currentTheme.borderColor}`,
                 padding: "32px 24px",
                 textAlign: "center",
                 fontSize: "12px",
-                color: "#997b66",
+                color: currentTheme.textColor,
+                opacity: 0.8,
               }}
             >
               <div>© {new Date().getFullYear()} {site.businessIdentity.name}. All rights reserved.</div>

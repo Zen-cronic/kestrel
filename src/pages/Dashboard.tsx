@@ -4,12 +4,36 @@ import { api } from "../../convex/_generated/api";
 import { Link } from "react-router-dom";
 import { cents, when } from "../lib/format";
 import type { Id } from "../../convex/_generated/dataModel";
+import {
+  IconMapPin,
+  IconMail,
+  IconGlobe,
+  IconAlertTriangle,
+  IconZap,
+  IconStar,
+  IconSearch,
+  IconCheck,
+  IconExternalLink,
+  IconFileText,
+  IconMessageSquare,
+  IconFileCheck,
+  IconMonitor,
+  IconActivity,
+  IconSidebar,
+  IconInfo,
+  IconX,
+  IconEdit,
+  IconSend,
+  IconLock,
+} from "../components/Icons";
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState<
     "discovery" | "evidence" | "outreach" | "thread" | "proposals" | "ledger" | "preview"
   >("evidence");
 
+  const [theme, setTheme] = useState<"dark" | "light">("dark");
+  const [previewThemeVariant, setPreviewThemeVariant] = useState<string>("warm-artisan");
   const [selectedProspectId, setSelectedProspectId] = useState<Id<"prospects"> | null>(null);
   const [searchCategory, setSearchCategory] = useState("independent café");
   const [searchLocation, setSearchLocation] = useState("Toronto, ON");
@@ -206,49 +230,52 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="studio-shell">
+    <div className="studio-shell" data-theme={theme}>
       {/* Top Command Bar */}
       <header className="studio-topbar">
         <div className="studio-brand-group">
           <div className="studio-logo-icon">S</div>
           <div>
             <div className="studio-title">Storefront Desk</div>
-            <div className="studio-subtitle">Autonomous SMB Acquisition Console</div>
+            <div className="studio-subtitle">SMB Acquisition &amp; Storefront Engine</div>
           </div>
         </div>
 
-        {/* Live Status Strip */}
+        {/* Live Status Indicator */}
         <div className="studio-status-strip">
-          <span className="fixture-dot" />
-          <span style={{ fontWeight: 600, color: "var(--ink-primary)" }}>Deterministic Fixture Mode</span>
-          <span style={{ color: "var(--line-strong)" }}>•</span>
-          <span style={{ color: "var(--ink-muted)" }}>
-            4 Sponsors: Convex Relational DB • OpenAI Responses • Firecrawl Audit • AgentMail
+          <span className="led-dot led-dot-green" />
+          <span style={{ fontSize: "11.5px", color: "var(--ink-secondary)", fontWeight: 500 }}>
+            Live Engine Active
+          </span>
+          <span style={{ color: "rgba(255, 255, 255, 0.15)", margin: "0 2px" }}>•</span>
+          <span style={{ color: "var(--ink-muted)", fontSize: "11px", fontFamily: "var(--font-mono)" }}>
+            Convex Reactive Sync
           </span>
         </div>
 
         {/* Top Actions */}
         <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
           <button
+            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            className="btn btn-secondary btn-sm"
+            title={`Switch to ${theme === "dark" ? "Light" : "Dark"} Theme`}
+          >
+            {theme === "dark" ? "☀ Light Mode" : "☾ Dark Mode"}
+          </button>
+          <button
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            className="btn btn-sm"
-            style={{
-              background: isSidebarOpen ? "rgba(99, 102, 241, 0.18)" : "rgba(255, 255, 255, 0.05)",
-              borderColor: isSidebarOpen ? "var(--accent-primary)" : "var(--line-default)",
-              color: isSidebarOpen ? "#c7d2fe" : "var(--ink-secondary)",
-            }}
+            className="btn btn-secondary btn-sm"
             title="Toggle Pipeline Sidebar"
           >
-            {isSidebarOpen ? "◧ Pipeline" : "◨ Pipeline"} ({candidates?.length ?? 0})
+            <IconSidebar size={13} style={{ opacity: 0.8 }} /> Pipeline ({candidates?.length ?? 0})
           </button>
           {selectedProspect && (
             <Link
               to={`/preview/${activePreviewSlug}`}
               target="_blank"
-              className="btn btn-sm"
-              style={{ background: "rgba(255, 255, 255, 0.05)", borderColor: "var(--line-default)" }}
+              className="btn btn-secondary btn-sm"
             >
-              🌐 Open Storefront Tab ↗
+              <IconGlobe size={13} /> View Storefront <IconExternalLink size={11} style={{ opacity: 0.6 }} />
             </Link>
           )}
           <button
@@ -256,7 +283,7 @@ export default function Dashboard() {
             disabled={isResetting}
             className="btn btn-sm btn-primary"
           >
-            {isResetting ? "Resetting..." : "⚡ Reset Hero Flow"}
+            <IconZap size={13} /> {isResetting ? "Resetting..." : "Reset Hero Flow"}
           </button>
         </div>
       </header>
@@ -271,7 +298,7 @@ export default function Dashboard() {
           </div>
 
           <form onSubmit={handleSearch} className="sidebar-search-box">
-            <div style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", color: "var(--ink-muted)" }}>
+            <div style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", color: "var(--ink-muted)", letterSpacing: "0.04em" }}>
               Places Discovery
             </div>
             <input
@@ -294,31 +321,34 @@ export default function Dashboard() {
               className="btn btn-sm btn-primary"
               style={{ width: "100%", marginTop: "2px" }}
             >
-              {isSearching ? "Querying Places..." : "🔍 Query Google Places"}
+              <IconSearch size={13} /> {isSearching ? "Querying Places..." : "Query Google Places"}
             </button>
           </form>
 
-          {/* Scrollable Candidate Cards */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "10px", overflowY: "auto", flex: 1, paddingRight: "2px" }}>
+          {/* Continuous Ruled Pipeline Rows */}
+          <div className="candidate-list">
             {candidates?.map((c: any) => {
               const isSelected = selectedProspectId === c.prospectId;
               return (
                 <div
                   key={c._id}
-                  className={`candidate-item-card ${isSelected ? "active" : ""}`}
+                  className={`candidate-item-row ${isSelected ? "active" : ""}`}
                   onClick={() => {
                     if (c.prospectId) setSelectedProspectId(c.prospectId);
                   }}
                 >
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "8px" }}>
-                    <strong style={{ fontSize: "14px", color: "var(--ink-primary)", lineHeight: 1.3 }}>{c.name}</strong>
-                    <span className={`badge ${c.status === "approved" ? "badge-green" : "badge-amber"}`}>
-                      {c.status}
+                    <strong style={{ fontSize: "13px", color: "var(--ink-primary)", lineHeight: 1.3, fontWeight: 600 }}>{c.name}</strong>
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: "5px", fontSize: "10px", color: c.status === "approved" ? "var(--status-green)" : "var(--ink-muted)", fontFamily: "var(--font-mono)" }}>
+                      <span style={{ width: "4px", height: "4px", borderRadius: "50%", background: c.status === "approved" ? "var(--status-green)" : "var(--ink-faint)" }} />
+                      {c.status.toUpperCase()}
                     </span>
                   </div>
-                  <div style={{ fontSize: "12px", color: "var(--ink-muted)" }}>📍 {c.formattedAddress}</div>
-                  <div style={{ fontSize: "12px", color: "var(--ink-secondary)" }}>
-                    ⭐ {c.rating} ({c.userRatingsTotal} reviews) • {c.priceLevel ? "$".repeat(c.priceLevel) : "$$"}
+                  <div style={{ fontSize: "11.5px", color: "var(--ink-muted)", display: "flex", alignItems: "center", gap: "5px" }}>
+                    <IconMapPin size={11} color="var(--ink-faint)" /> {c.formattedAddress}
+                  </div>
+                  <div style={{ fontSize: "11px", color: "var(--ink-secondary)", display: "flex", alignItems: "center", gap: "5px" }}>
+                    <IconStar size={11} color="var(--status-amber)" /> {c.rating} ({c.userRatingsTotal}) • {c.priceLevel ? "$".repeat(c.priceLevel) : "$$"}
                   </div>
 
                   <div className="presence-chips">
@@ -332,19 +362,19 @@ export default function Dashboard() {
                         .replace("Menu only available as a low-res photo on social media", "Photo-Only Menu");
                       return (
                         <span key={idx} className="presence-chip">
-                          ⚠️ {shortText}
+                          {shortText}
                         </span>
                       );
                     })}
                   </div>
 
-                  <div style={{ marginTop: "4px" }}>
+                  <div style={{ marginTop: "6px" }}>
                     {c.status === "approved" ? (
-                      <div style={{ fontSize: "11px", color: "var(--status-green)", fontWeight: 700, display: "flex", alignItems: "center", gap: "4px" }}>
-                        ✓ Active Dossier Loaded
+                      <div style={{ fontSize: "11px", color: "var(--status-green)", fontWeight: 500, display: "flex", alignItems: "center", gap: "6px" }}>
+                        <span className="led-dot led-dot-green" /> Selected Target
                       </div>
                     ) : (
-                      <div style={{ display: "flex", gap: "6px" }}>
+                      <div style={{ display: "flex", gap: "8px", marginTop: "4px" }}>
                         <button
                           className="btn btn-sm btn-primary"
                           style={{ flex: 1 }}
@@ -356,8 +386,7 @@ export default function Dashboard() {
                           Approve
                         </button>
                         <button
-                          className="btn btn-sm"
-                          style={{ color: "var(--ink-muted)" }}
+                          className="btn btn-sm btn-ghost"
                           onClick={(e) => {
                             e.stopPropagation();
                             dismissCandidate({ candidateId: c._id });
@@ -379,12 +408,12 @@ export default function Dashboard() {
           {actionNotice && (
             <div
               style={{
-                background: "rgba(99, 102, 241, 0.12)",
-                border: "1px solid rgba(99, 102, 241, 0.35)",
+                background: "rgba(99, 102, 241, 0.08)",
+                border: "1px solid rgba(99, 102, 241, 0.25)",
                 color: "#c7d2fe",
-                padding: "12px 18px",
-                borderRadius: "10px",
-                fontSize: "13px",
+                padding: "10px 16px",
+                borderRadius: "8px",
+                fontSize: "12.5px",
                 fontWeight: 500,
                 display: "flex",
                 alignItems: "center",
@@ -392,39 +421,51 @@ export default function Dashboard() {
                 animation: "noticeSlide var(--duration-fast) var(--ease-spring)",
               }}
             >
-              ℹ️ {actionNotice}
+              <IconInfo size={15} color="#818cf8" /> {actionNotice}
             </div>
           )}
 
           {/* Active Prospect Hero Card */}
           {selectedProspect && (
             <div className="prospect-hero-panel">
-              <div>
+              <div style={{ position: "relative", zIndex: 1 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
+                  <span className="status-pill status-pill-subtle">
+                    Active Prospect
+                  </span>
+                  <span style={{ fontSize: "12px", color: "var(--ink-muted)" }}>•</span>
+                  <span style={{ fontSize: "12px", color: "var(--ink-muted)" }}>{activeCampaign?.name}</span>
+                </div>
                 <h2 className="prospect-name">{selectedProspect.name}</h2>
                 <div className="prospect-submeta">
-                  <span>📍 {selectedProspect.address}</span>
-                  <span>•</span>
-                  <span>✉️ {selectedProspect.targetEmail}</span>
-                  <span>•</span>
-                  <span
-                    className={`badge badge-${
-                      selectedProspect.outreachStatus === "accepted"
-                        ? "green"
-                        : selectedProspect.outreachStatus === "sent"
-                        ? "blue"
-                        : "amber"
-                    }`}
-                  >
-                    {selectedProspect.outreachStatus}
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}>
+                    <IconMapPin size={12} color="var(--ink-muted)" /> {selectedProspect.address}
                   </span>
                   <span>•</span>
-                  <span style={{ color: "var(--ink-muted)" }}>Campaign: {activeCampaign?.name}</span>
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}>
+                    <IconMail size={12} color="var(--ink-muted)" /> {selectedProspect.targetEmail}
+                  </span>
+                  <span>•</span>
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "12px", color: "var(--ink-secondary)" }}>
+                    <span
+                      className={`led-dot ${
+                        selectedProspect.outreachStatus === "accepted"
+                          ? "led-dot-green"
+                          : selectedProspect.outreachStatus === "sent"
+                          ? "led-dot-blue"
+                          : "led-dot-amber"
+                      }`}
+                    />
+                    <span style={{ textTransform: "capitalize", fontWeight: 500 }}>
+                      {selectedProspect.outreachStatus}
+                    </span>
+                  </span>
                 </div>
               </div>
 
               {activeCampaign && (
-                <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
-                  <span style={{ fontSize: "12px", color: "var(--ink-muted)", fontWeight: 600 }}>Policy Mode:</span>
+                <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap", position: "relative", zIndex: 1 }}>
+                  <span style={{ fontSize: "12px", color: "var(--ink-muted)", fontWeight: 500 }}>Policy Guardrail</span>
                   <div className="mode-selector">
                     <button
                       className={`mode-btn ${activeCampaign.mode === "manual" ? "active" : ""}`}
@@ -450,25 +491,48 @@ export default function Dashboard() {
               className={`desk-tab-btn ${activeTab === "evidence" ? "active" : ""}`}
               onClick={() => setActiveTab("evidence")}
             >
-              📑 Grounded Brief
+              <IconFileText size={13} /> Grounded Brief
               <span className="tab-badge">{evidence?.claims?.length ?? 0}</span>
             </button>
             <button
               className={`desk-tab-btn ${activeTab === "outreach" ? "active" : ""}`}
               onClick={() => setActiveTab("outreach")}
             >
-              ✉️ Pitch Queue
+              <IconMail size={13} /> Pitch Queue
               {draft && (
                 <span
-                  className={`badge badge-${
-                    draft.approvalStatus === "approved"
-                      ? "green"
-                      : draft.approvalStatus === "pending_approval"
-                      ? "amber"
-                      : "red"
-                  }`}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "4px",
+                    fontSize: "10px",
+                    fontFamily: "var(--font-mono)",
+                    color:
+                      draft.approvalStatus === "approved"
+                        ? "var(--status-green)"
+                        : draft.approvalStatus === "pending_approval"
+                        ? "var(--status-amber)"
+                        : "var(--status-red)",
+                  }}
                 >
-                  {draft.approvalStatus}
+                  <span
+                    style={{
+                      width: "5px",
+                      height: "5px",
+                      borderRadius: "50%",
+                      background:
+                        draft.approvalStatus === "approved"
+                          ? "var(--status-green)"
+                          : draft.approvalStatus === "pending_approval"
+                          ? "var(--status-amber)"
+                          : "var(--status-red)",
+                    }}
+                  />
+                  {draft.approvalStatus === "approved"
+                    ? "Approved"
+                    : draft.approvalStatus === "pending_approval"
+                    ? "Review"
+                    : "Declined"}
                 </span>
               )}
             </button>
@@ -476,177 +540,172 @@ export default function Dashboard() {
               className={`desk-tab-btn ${activeTab === "thread" ? "active" : ""}`}
               onClick={() => setActiveTab("thread")}
             >
-              💬 AgentMail Thread
+              <IconMessageSquare size={13} /> AgentMail Thread
               <span className="tab-badge">{thread?.messages?.length ?? 0}</span>
             </button>
             <button
               className={`desk-tab-btn ${activeTab === "proposals" ? "active" : ""}`}
               onClick={() => setActiveTab("proposals")}
             >
-              🤝 Terms
+              <IconFileCheck size={13} /> Terms
               <span className="tab-badge">v{proposalHistory?.[0]?.version ?? 1}</span>
             </button>
             <button
               className={`desk-tab-btn ${activeTab === "preview" ? "active" : ""}`}
               onClick={() => setActiveTab("preview")}
             >
-              🖥️ Storefront Studio
+              <IconMonitor size={13} /> Storefront Studio
             </button>
             <button
               className={`desk-tab-btn ${activeTab === "ledger" ? "active" : ""}`}
               onClick={() => setActiveTab("ledger")}
             >
-              📜 Ledger
+              <IconActivity size={13} /> Ledger
               <span className="tab-badge">{activityLedger?.length ?? 0}</span>
             </button>
           </nav>
 
           {/* TAB 1: Audited Evidence & Brief */}
           {activeTab === "evidence" && selectedProspect && (
-            <div>
-              <div className="card" style={{ padding: "28px 32px" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "12px", flexWrap: "wrap", gap: "12px" }}>
-                  <div>
-                    <h3 style={{ margin: "0 0 6px", fontSize: "20px", color: "var(--ink-primary)" }}>
-                      Audited Business Brief: {selectedProspect.name}
-                    </h3>
-                    <p style={{ color: "var(--ink-muted)", fontSize: "14px", margin: 0 }}>
-                      Every factual claim is cross-verified against official Google Places listing data and Firecrawl open-web scrapes.
-                      No unconfirmed menu items, prices, or awards are hallucinated.
-                    </p>
-                  </div>
-                  <span className="badge badge-green" style={{ padding: "6px 12px", fontSize: "12px" }}>
-                    ✓ Grounded With Structured Citations
-                  </span>
+            <div style={{ animation: "fadeSlideUp var(--duration-normal) var(--ease-spring) both" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: "16px", fontWeight: 600, color: "var(--ink-primary)", letterSpacing: "-0.015em" }}>
+                    Verified Intelligence Ledger
+                  </h3>
+                  <p style={{ margin: "3px 0 0", fontSize: "12.5px", color: "var(--ink-muted)" }}>
+                    Cross-referenced claims extracted from public records and web crawls.
+                  </p>
                 </div>
+                <span className="status-pill status-pill-subtle">
+                  Fact-Checked Citations
+                </span>
+              </div>
 
-                {evidence && (
-                  <div style={{ marginTop: "24px" }}>
-                    {/* Summary Audit Ribbon */}
-                    <div className="audit-stats-grid">
-                      <div className="audit-stat-card">
-                        <div className="audit-stat-icon" style={{ color: "#818cf8" }}>🌐</div>
-                        <div>
-                          <div style={{ fontSize: "11px", textTransform: "uppercase", color: "var(--ink-muted)", fontWeight: 700 }}>Scraped Sources</div>
-                          <div style={{ fontSize: "17px", fontWeight: 800, color: "var(--ink-primary)" }}>{evidence.sources.length} Verified Web Citations</div>
-                        </div>
-                      </div>
-                      <div className="audit-stat-card">
-                        <div className="audit-stat-icon" style={{ color: "#34d399" }}>🛡️</div>
-                        <div>
-                          <div style={{ fontSize: "11px", textTransform: "uppercase", color: "var(--ink-muted)", fontWeight: 700 }}>Factual Claims</div>
-                          <div style={{ fontSize: "17px", fontWeight: 800, color: "var(--ink-primary)" }}>{evidence.claims.length} Grounded (Zero Guessing)</div>
-                        </div>
-                      </div>
-                      <div className="audit-stat-card">
-                        <div className="audit-stat-icon" style={{ color: "#fbbf24" }}>⚠️</div>
-                        <div>
-                          <div style={{ fontSize: "11px", textTransform: "uppercase", color: "var(--ink-muted)", fontWeight: 700 }}>Safety Guardrail</div>
-                          <div style={{ fontSize: "17px", fontWeight: 800, color: "var(--ink-primary)" }}>1 Flagged Needs Confirmation</div>
-                        </div>
-                      </div>
+              {evidence && (
+                <div>
+                  {/* Unboxed Minimalist Metrics Strip */}
+                  <div className="audit-metrics-strip">
+                    <div className="audit-metric-col">
+                      <span className="metric-label">Citations Scraped</span>
+                      <span className="metric-value">{evidence.sources.length} <span className="metric-sub">Sources</span></span>
+                    </div>
+                    <div className="metric-divider" />
+                    <div className="audit-metric-col">
+                      <span className="metric-label">Grounded Facts</span>
+                      <span className="metric-value">{evidence.claims.length} <span className="metric-sub">Verified</span></span>
+                    </div>
+                    <div className="metric-divider" />
+                    <div className="audit-metric-col">
+                      <span className="metric-label">Safety Policy Guardrail</span>
+                      <span className="metric-value">1 <span className="metric-sub">Manual Review</span></span>
+                    </div>
+                  </div>
+
+                  {/* Technical Inspection Ledger: Borderless Table with Surface Depth */}
+                  <div className="audit-table-container">
+                    <div className="audit-table-header">
+                      <span>Domain Scope</span>
+                      <span>Established Factual Claim &amp; Web Excerpt</span>
+                      <span style={{ textAlign: "right" }}>Verification</span>
                     </div>
 
-                    {/* Verified Factual Claims Grid */}
-                    <div style={{ marginBottom: "32px" }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-                        <h4 style={{ margin: 0, color: "var(--ink-primary)", fontSize: "15px", fontWeight: 700 }}>
-                          Established Factual Claims ({evidence.claims.length})
-                        </h4>
-                        <span style={{ fontSize: "12px", color: "var(--ink-muted)" }}>
-                          Source: Firecrawl Scrape &amp; Search Analysis
-                        </span>
+                    {evidence.claims.map((cl: any) => (
+                      <div key={cl._id} className="audit-table-row">
+                        <div>
+                          <span className="claim-category-badge">
+                            {cl.claimKey === "unconfirmed_catering" ? (
+                              <span className="status-glyph status-glyph-amber">▲</span>
+                            ) : (
+                              <span className="status-glyph status-glyph-green">◆</span>
+                            )}
+                            {cl.claimKey.replace(/_/g, " ")}
+                          </span>
+                        </div>
+                        <div>
+                          <div style={{ fontSize: "13.5px", color: "var(--ink-primary)", lineHeight: 1.5, fontWeight: 500 }}>
+                            {cl.statement}
+                          </div>
+                          <div className="claim-quote-box">
+                            <span className="excerpt-prefix">SRC // </span>{cl.rawExcerpt}
+                          </div>
+                        </div>
+                        <div style={{ textAlign: "right" }}>
+                          {cl.status === "verified" ? (
+                            <span className="status-pill status-pill-green">
+                              <span className="status-glyph status-glyph-green">◆</span> Verified
+                            </span>
+                          ) : (
+                            <span className="status-pill status-pill-amber">
+                              <span className="status-glyph status-glyph-amber">▲</span> Review Flag
+                            </span>
+                          )}
+                          <div style={{ fontSize: "10.5px", color: "var(--ink-muted)", fontFamily: "var(--font-mono)", marginTop: "4px" }}>
+                            {typeof cl.confidence === "number" ? `${Math.round(cl.confidence * 100)}% match` : String(cl.confidence)}
+                          </div>
+                        </div>
                       </div>
+                    ))}
+                  </div>
 
-                      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))", gap: "14px" }}>
-                        {evidence.claims.map((cl: any) => (
-                          <div key={cl._id} className="claim-row-card">
-                            <div className="claim-top-meta">
-                              <span className="claim-title-text">
-                                {cl.claimKey === "specialty_coffee" && "☕ "}
-                                {cl.claimKey === "baked_goods" && "🥐 "}
-                                {cl.claimKey === "dog_friendly_patio" && "🐶 "}
-                                {cl.claimKey === "founding_story" && "🏛️ "}
-                                {cl.claimKey === "atmosphere_details" && "🛋️ "}
-                                {cl.claimKey === "unconfirmed_catering" && "⚠️ "}
-                                {cl.claimKey.replace(/_/g, " ")}
-                              </span>
-                              <span
-                                className={`badge badge-${
-                                  cl.status === "verified" ? "green" : "amber"
-                                }`}
-                              >
-                                {cl.status === "verified" ? "✓ Verified" : "Flagged"} ({cl.confidence})
-                              </span>
+                  {/* Sources and Safeguard */}
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))", gap: "24px" }}>
+                    <div>
+                      <div style={{ fontSize: "12px", color: "var(--ink-muted)", fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase", marginBottom: "12px" }}>
+                        Web Citations &amp; Provenance ({evidence.sources.length})
+                      </div>
+                      <div className="sources-list">
+                        {evidence.sources.map((s: any) => (
+                          <div key={s._id} className="source-row">
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                              <strong style={{ color: "var(--ink-primary)", fontSize: "13px", fontWeight: 600 }}>{s.title}</strong>
+                              <span className="status-pill status-pill-subtle" style={{ fontSize: "10px" }}>{s.provider}</span>
                             </div>
-                            <div style={{ fontSize: "13px", color: "var(--ink-secondary)", lineHeight: 1.5 }}>
-                              {cl.statement}
+                            <div style={{ fontSize: "11.5px", color: "var(--ink-muted)", fontFamily: "var(--font-mono)", wordBreak: "break-all" }}>
+                              <code>{s.url}</code> • {when(s.retrievedAt)}
                             </div>
-                            <div className="claim-quote-box">
-                              "{cl.rawExcerpt}"
-                            </div>
+                            {s.rawTextSnippet && (
+                              <div style={{ fontSize: "12px", color: "var(--ink-secondary)", lineHeight: 1.5, marginTop: "2px" }}>
+                                {s.rawTextSnippet}
+                              </div>
+                            )}
                           </div>
                         ))}
                       </div>
                     </div>
 
-                    {/* Sources and Safeguard */}
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))", gap: "20px" }}>
-                      <div>
-                        <h4 style={{ margin: "0 0 14px", color: "var(--ink-primary)", fontSize: "15px", fontWeight: 700 }}>
-                          Open-Web Scraped Sources ({evidence.sources.length})
-                        </h4>
-                        <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-                          {evidence.sources.map((s: any) => (
-                            <div key={s._id} className="evidence-item">
-                              <div className="evidence-header">
-                                <strong style={{ color: "var(--ink-primary)", fontSize: "13.5px" }}>{s.title}</strong>
-                                <span className="badge badge-blue">{s.provider}</span>
-                              </div>
-                              <div style={{ fontSize: "12px", color: "var(--ink-muted)", wordBreak: "break-all" }}>
-                                URL: <code>{s.url}</code> • Retrieved: {when(s.retrievedAt)}
-                              </div>
-                              {s.rawTextSnippet && (
-                                <div className="evidence-excerpt" style={{ fontSize: "12px", marginTop: "8px" }}>
-                                  {s.rawTextSnippet}
-                                </div>
-                              )}
-                            </div>
-                          ))}
-                        </div>
+                    <div>
+                      <div style={{ fontSize: "12px", color: "var(--ink-muted)", fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase", marginBottom: "12px" }}>
+                        Safety Policy Guardrail
                       </div>
-
-                      <div>
-                        <h4 style={{ margin: "0 0 14px", color: "var(--ink-primary)", fontSize: "15px", fontWeight: 700 }}>
-                          Safety Guardrail: Explicit Confirmation
-                        </h4>
-                        <div
-                          style={{
-                            background: "rgba(245, 158, 11, 0.06)",
-                            border: "1px dashed rgba(245, 158, 11, 0.4)",
-                            borderRadius: "12px",
-                            padding: "22px",
-                            fontSize: "13.5px",
-                            color: "#fcd34d",
-                            lineHeight: 1.6,
-                          }}
-                        >
-                          <div style={{ fontWeight: 700, fontSize: "14px", marginBottom: "8px", display: "flex", alignItems: "center", gap: "6px" }}>
-                            ⚠️ Unconfirmed Services Notice:
-                          </div>
-                          <p style={{ margin: "0 0 12px", color: "#fef3c7" }}>
-                            Corporate event catering packages and custom birthday cake orders were not found on the open web for this business.
-                          </p>
-                          <div style={{ fontSize: "12.5px", color: "#fde68a" }}>
-                            • Marked as <strong>"Needs Confirmation"</strong> rather than fabricated by AI.<br />
-                            • Storefront Desk guarantees zero invented menu items, hours, or pricing tiers.
-                          </div>
+                      <div
+                        style={{
+                          background: "rgba(245, 158, 11, 0.03)",
+                          border: "1px solid rgba(245, 158, 11, 0.16)",
+                          borderLeft: "2px solid var(--status-amber)",
+                          borderRadius: "8px",
+                          padding: "18px 20px",
+                          fontSize: "13px",
+                          color: "var(--ink-secondary)",
+                          lineHeight: 1.6,
+                        }}
+                      >
+                        <div style={{ fontWeight: 600, fontSize: "13px", marginBottom: "6px", display: "flex", alignItems: "center", gap: "8px", color: "#fbbf24" }}>
+                          <IconAlertTriangle size={15} color="var(--status-amber)" />
+                          Unconfirmed Services Notice
+                        </div>
+                        <p style={{ margin: "0 0 10px", color: "var(--ink-primary)" }}>
+                          Corporate event catering packages and custom birthday cake orders were not found on the open web for this business.
+                        </p>
+                        <div style={{ fontSize: "12px", color: "var(--ink-muted)", lineHeight: 1.5 }}>
+                          • Marked as <strong style={{ color: "#fbbf24" }}>"Needs Confirmation"</strong> rather than fabricated by AI.<br />
+                          • Storefront Desk guarantees zero invented menu items, hours, or pricing tiers.
                         </div>
                       </div>
                     </div>
                   </div>
-                )}
-              </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -678,17 +737,21 @@ export default function Dashboard() {
                 {draft.approvalStatus === "expired_due_to_edit" && (
                   <div
                     style={{
-                      background: "rgba(239, 68, 68, 0.12)",
-                      border: "1px solid rgba(239, 68, 68, 0.35)",
+                      background: "rgba(239, 68, 68, 0.08)",
+                      border: "1px solid rgba(239, 68, 68, 0.25)",
                       color: "#fca5a5",
                       padding: "12px 16px",
                       borderRadius: "8px",
                       marginBottom: "16px",
                       fontSize: "13px",
-                      fontWeight: 600,
+                      fontWeight: 500,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
                     }}
                   >
-                    ⚠️ Approval Expired: This pitch was edited after operator approval. A fresh approval is required before dispatch!
+                    <IconAlertTriangle size={15} color="#f87171" />
+                    Approval Expired: This pitch was edited after operator approval. A fresh approval is required before dispatch!
                   </div>
                 )}
 
@@ -775,7 +838,7 @@ export default function Dashboard() {
                         notify("Outreach draft approved! Ready for dispatch.");
                       }}
                     >
-                      ✓ Approve Pitch for Sending
+                      <IconCheck size={14} /> Approve Pitch for Sending
                     </button>
                   ) : (
                     <button
@@ -786,13 +849,13 @@ export default function Dashboard() {
                         notify("Draft rejected.");
                       }}
                     >
-                      ✕ Revoke Approval
+                      <IconX size={14} /> Revoke Approval
                     </button>
                   )}
 
                   {!isEditingDraft && (
                     <button className="btn" onClick={() => setIsEditingDraft(true)}>
-                      ✏️ Edit Pitch
+                      <IconEdit size={13} /> Edit Pitch
                     </button>
                   )}
 
@@ -802,7 +865,7 @@ export default function Dashboard() {
                     disabled={draft.approvalStatus !== "approved"}
                     onClick={handleSendOutreach}
                   >
-                    🚀 Dispatch Email via AgentMail
+                    <IconSend size={13} /> Dispatch Email via AgentMail
                   </button>
 
                   <span style={{ fontSize: "12px", color: "var(--ink-muted)" }}>
@@ -827,7 +890,7 @@ export default function Dashboard() {
                     </span>
                   </div>
                   <button className="btn btn-primary" onClick={handleSimulateReply}>
-                    💬 Simulate Inbound Reply &amp; Counteroffer
+                    <IconMessageSquare size={13} /> Simulate Inbound Reply
                   </button>
                 </div>
 
@@ -928,7 +991,9 @@ export default function Dashboard() {
                             {p.status}
                           </span>
                           {p.isCommerciallyBinding && (
-                            <span className="badge badge-green">🔒 Binding Agreement</span>
+                            <span className="badge badge-green">
+                              <IconLock size={11} /> Binding Agreement
+                            </span>
                           )}
                         </div>
                       </div>
@@ -966,8 +1031,9 @@ export default function Dashboard() {
                             gap: "12px",
                           }}
                         >
-                          <span style={{ fontSize: "13px", fontWeight: 600, color: "#fcd34d" }}>
-                            ⚠️ Client Counteroffer Awaiting Operator Action: Accept ${ (p.priceCents / 100).toFixed(2) } CAD with 10-day timeline?
+                          <span style={{ display: "inline-flex", alignItems: "center", gap: "8px", fontSize: "13px", fontWeight: 600, color: "#fcd34d" }}>
+                            <IconAlertTriangle size={15} color="#fbbf24" />
+                            Client Counteroffer Awaiting Action: ${(p.priceCents / 100).toFixed(2)} CAD (10-day turnaround)
                           </span>
                           <div style={{ display: "flex", gap: "8px" }}>
                             <button
@@ -977,7 +1043,7 @@ export default function Dashboard() {
                                 notify(`Proposal v${p.version} accepted! Binding terms established.`);
                               }}
                             >
-                              ✓ Accept Counteroffer
+                              <IconCheck size={13} /> Accept Counteroffer
                             </button>
                             <button
                               className="btn btn-sm"
@@ -987,7 +1053,7 @@ export default function Dashboard() {
                                 notify(`Proposal v${p.version} declined.`);
                               }}
                             >
-                              ✕ Decline
+                              <IconX size={13} /> Decline
                             </button>
                           </div>
                         </div>
@@ -1016,7 +1082,7 @@ export default function Dashboard() {
                   </span>
                 </div>
                 <Link
-                  to={`/preview/${activePreviewSlug}`}
+                  to={`/preview/${activePreviewSlug}?variant=${previewThemeVariant}`}
                   target="_blank"
                   className="btn btn-sm btn-primary"
                 >
@@ -1024,9 +1090,38 @@ export default function Dashboard() {
                 </Link>
               </div>
 
+              {/* Theme Variant Switcher */}
+              <div style={{ display: "flex", gap: "8px", alignItems: "center", marginBottom: "14px", flexWrap: "wrap" }}>
+                <span style={{ fontSize: "12px", color: "var(--ink-muted)", fontWeight: 500 }}>Storefront Design Variant:</span>
+                <button
+                  className={`btn btn-sm ${previewThemeVariant === "warm-artisan" ? "btn-primary" : "btn-secondary"}`}
+                  onClick={() => setPreviewThemeVariant("warm-artisan")}
+                >
+                  ☕ Warm Artisan (Light)
+                </button>
+                <button
+                  className={`btn btn-sm ${previewThemeVariant === "nordic-light" ? "btn-primary" : "btn-secondary"}`}
+                  onClick={() => setPreviewThemeVariant("nordic-light")}
+                >
+                  🥛 Nordic Alabaster (Light)
+                </button>
+                <button
+                  className={`btn btn-sm ${previewThemeVariant === "sage-botanical" ? "btn-primary" : "btn-secondary"}`}
+                  onClick={() => setPreviewThemeVariant("sage-botanical")}
+                >
+                  🌿 Sage Botanical (Light)
+                </button>
+                <button
+                  className={`btn btn-sm ${previewThemeVariant === "obsidian-dark" ? "btn-primary" : "btn-secondary"}`}
+                  onClick={() => setPreviewThemeVariant("obsidian-dark")}
+                >
+                  🌑 Obsidian Roastery (Dark)
+                </button>
+              </div>
+
               <div style={{ height: "720px", borderRadius: "12px", overflow: "hidden", border: "1px solid var(--line-default)" }}>
                 <iframe
-                  src={`/preview/${activePreviewSlug}`}
+                  src={`/preview/${activePreviewSlug}?variant=${previewThemeVariant}`}
                   title="Live Storefront Preview"
                   style={{ width: "100%", height: "100%", border: "none" }}
                 />
