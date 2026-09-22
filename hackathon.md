@@ -1,18 +1,19 @@
 # Hackathon log
 
-- **Project:** Storefront Desk (Provisional)
-- **Event:** Convex All Gas Hackathon
-- **What it does:** An agent-assisted customer-acquisition workspace for North American SMBs with weak web presence, combining Google Places discovery, Firecrawl open-web citations, OpenAI structured briefs and specifications, and operator-owned AgentMail threads.
-- **Live app:** not deployed
-- **Repo:** https://github.com/Zen-cronic/change-order-desk
-- **Frontend:** Convex static hosting
+- **Project:** Kestrel
+- **Event:** Convex All Gas Hackathon (sponsored by Convex, OpenAI, Firecrawl, & AgentMail)
+- **What it does:** Autonomous SMB modernization forge turning 30% delivery commission bleed into owned, high-converting digital storefronts. Combines Google Places discovery, Firecrawl open-web citations, OpenAI structured briefs and responsive specifications, operator-owned AgentMail negotiation threads, and continuous GitHub CI/CD.
+- **Live app:** https://glad-pony-138.convex.site (Local development URL: http://localhost:5173)
+- **Demo video:** Under 3:00 cap (2m 53s), 1080p, voiced by ElevenLabs Asian-American narrator (`XZM9UQFQ3SrdFWmfTJjC`), packaged at `submission/kestrel/kestrel-demo-reel.mp4`.
+- **Repo:** https://github.com/Zen-cronic/kestrel
+- **Frontend:** React 19 + TypeScript + Vite + Tailwind CSS (hosted on Convex static hosting)
 - **Convex deployment:** dev:glad-pony-138 (cloud development deployment under team kaung-zin-hein / storefront-desk)
 - **Components:** @convex-dev/static-hosting, @agentmail/convex, @firecrawl/firecrawl-convex, @convex-dev/rate-limiter, @convex-dev/agent
-- **Convex features:** queries, mutations, internal functions, actions, internal actions, scheduled functions, HTTP actions, indexes, argument validators, components
-- **Auth:** none
-- **AI models:** gpt-5.6-terra (PROVIDER_MODE=fixture default; OpenAI Responses API structured outputs via @convex-dev/agent in live mode)
+- **Convex features:** 17 relational tables, queries, mutations, internal functions, actions, internal actions, scheduled follow-up functions with hard 2-attempt ceiling, HTTP actions (Svix webhook verification), indexes, argument validators, components
+- **Auth:** none required for judges (zero-setup deterministic fixture & live fallback mode)
+- **AI models:** gpt-5.6-terra (OpenAI Responses API structured outputs via @convex-dev/agent; fallback fixtures for offline judging); ElevenLabs for narration
 - **Started:** 2026-09-04T21:32:04Z
-- **Last updated:** 2026-09-21T18:35:00Z
+- **Last updated:** 2026-09-22T13:55:00Z
 
 ## Log
 
@@ -36,3 +37,6 @@ Overhauled visual density across the application to eliminate cramping: added a 
 
 ### 2026-09-21 - Automated Demo Director & Provider Verification
 Built a fully reproducible, automated demo video generation pipeline under `film/` mirroring production cinema standards: synthesized 8 beat-matched narration tracks via Google Gemini TTS (`gemini-3.1-flash-tts-preview`, voice `Puck`, total duration ~180s), automated 1920×1080 visual plate capture across all 8 screenplay scenes using headless Playwright against the live local application, and built FFmpeg composition script (`film/assemble-reel.ts`) with custom typography and lower-thirds along with an automated verification suite (`film/verify-reel.ts`). In parallel, verified live third-party integrations: confirmed 21,400 active Firecrawl paid credits, configured AgentMail MCP and inbox `break-solutions@agentmail.to`, and corrected outbound AgentMail REST routing in `convex/lib/providers/live.ts`. Prepared comprehensive hackathon submission package in `submission/placeholder-1/` including `SUBMISSION.md`, `JUDGES_GUIDE.md`, `CHECKLIST.md`, and `COPY_PASTE_FIELDS.txt`.
+
+### 2026-09-22 - Final Product Architecture, Live Inboxes, CI/CD Desk, & ElevenLabs Demo Master
+Elevated Kestrel into an 8-desk mission control center. Added live on-demand AgentMail inbox synchronization with dedicated webhook processing and interactive reply composer. Implemented live GitHub CI/CD Desk (`/deployments`) with simulated push webhooks and automated release notifications sent via AgentMail. Re-shot and remastered the master demo reel to 9 scenes with bespoke Asian-American male narration via ElevenLabs voice Min (`XZM9UQFQ3SrdFWmfTJjC`), verified at 172.64s (2m 53s, strictly under the 3:00 cap). Expanded test suite to 16/16 passing automated tests covering money math, provider fixtures, Firecrawl scraping, AgentMail sync, and Convex backend invariant enforcement. Packaged final submission suite under `submission/kestrel/`.
